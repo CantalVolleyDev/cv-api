@@ -17,6 +17,8 @@ public class Test {
 			SeasonDAO dao = new SeasonDAO(Season.class);
 			Season sai = dao.createFromValues(values);
 			System.out.println(sai);
+			System.out.println(dao.queryAll());
+			System.out.println(dao.queryForOne(1));
 		} catch (APIException e) {
 			e.printStackTrace();
 		}
