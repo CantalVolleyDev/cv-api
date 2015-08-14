@@ -3,7 +3,10 @@ package com.jtouzy.cvapi.dao;
 import java.lang.reflect.Field;
 import java.util.List;
 
+import com.google.common.collect.ImmutableMap;
 import com.jtouzy.cvapi.errors.DAOObjectInstanciationException;
+import com.jtouzy.cvapi.errors.DAOObjectParsingException;
+import com.jtouzy.cvapi.errors.NullUniqueIndexException;
 import com.jtouzy.cvapi.errors.SQLExecutionException;
 import com.jtouzy.cvapi.errors.WrongDAODefinitionException;
 
@@ -46,19 +49,13 @@ public abstract class AbstractSingleIdentifierDAO<T> extends AbstractDAO<T> {
 	 * @param id Identifiant de l'index unique
 	 * @return Objet retrouvé à partir de son index unique, ou NULL si inexistant
 	 * @throws DAOObjectInstanciationException Si l'objet ne parvient pas à être instancié
+	 * @throws DAOObjectParsingException Si l'objet à créér avec les valeurs ne peut être lu correctement
 	 * @throws SQLExecutionException Si l'exécution de la requête SQL tombe en erreur
+	 * @throws NullUniqueIndexException Si l'index unique obligatoire n'est pas renseigné
 	 */
 	public T queryForOne(Integer id)
-	throws DAOObjectInstanciationException, SQLExecutionException {
-		StringBuilder sql = getSQLClauseColumnsWithTable()
-				            .append(" where ")
-				            .append(getIDColumn())
-				            .append(" = ").append(id);
-		List<T> elements = createObjectsFromQuery(sql);
-		if (elements.size() == 0) {
-			return null;
-		}
-		return elements.get(0);
+	throws DAOObjectInstanciationException, DAOObjectParsingException, SQLExecutionException, NullUniqueIndexException {
+		return queryUnique(ImmutableMap.<String,Object>builder().put(getIDColumn(), id).build());
 	}
 	/**
 	 * Récupération de la colonne de l'index unique<br>
