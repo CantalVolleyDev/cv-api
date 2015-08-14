@@ -1,5 +1,6 @@
 package com.jtouzy.cvapi.dao;
 
+import java.sql.Connection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -21,6 +22,7 @@ public class DAOManager {
 	private BiMap<Class<?>, String> classToTableMap;
 	private Map<Class<?>, TableContext> classToFieldsMap;
 	private Reflections reflections;
+	private ConnectionDAOMapper daoMapper;
 	
 	public static DAOManager get() {
 		if (instance == null) {
@@ -36,11 +38,17 @@ public class DAOManager {
 	private void init() {
 		classToTableMap = HashBiMap.create();
 		classToFieldsMap = new HashMap<>();
+		daoMapper = new ConnectionDAOMapper();
 		reflections = new Reflections("com.jtouzy.cvapi.model", 
 				                      new FieldAnnotationsScanner(), 
 				                      new TypeAnnotationsScanner(),
 				                      new SubTypesScanner());
 		findModelData();
+	}
+	
+	public ConnectionDAOMapping registerForCnx(Connection connection) {
+		// TODO regarder dans DAOMapper si on retrouve cette connexion, et on renvoi le mapping
+		return daoMapper.register(connection);
 	}
 	
 	private void findModelData() {
