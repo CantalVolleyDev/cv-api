@@ -1,8 +1,8 @@
 package com.jtouzy.cvapi.model;
 
-import com.jtouzy.cvapi.dao.annotations.DAOTable;
-import com.jtouzy.cvapi.dao.annotations.DAOTableField;
-import com.jtouzy.cvapi.dao.annotations.DAOTableIDField;
+import com.jtouzy.dao.annotations.DAOTable;
+import com.jtouzy.dao.annotations.DAOTableField;
+import com.jtouzy.dao.annotations.DAOTableIDField;
 
 @DAOTable(tableName = "sai")
 public class Season {

@@ -4,7 +4,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.List;
 
-import com.jtouzy.cvapi.dao.DAOManager;
+import com.jtouzy.dao.DAOManager;
 import com.jtouzy.cvapi.dao.SeasonDAO;
 import com.jtouzy.cvapi.model.Season;
 

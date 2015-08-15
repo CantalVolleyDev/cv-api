@@ -4,7 +4,7 @@ import javax.servlet.ServletException;
 
 import org.glassfish.jersey.servlet.ServletContainer;
 
-import com.jtouzy.cvapi.dao.DAOManager;
+import com.jtouzy.dao.DAOManager;
 
 /**
  * Servlet générale de l'API
