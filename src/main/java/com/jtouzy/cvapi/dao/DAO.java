@@ -10,10 +10,15 @@ import com.jtouzy.cvapi.errors.SQLExecutionException;
 
 /**
  * Interface d'un DAO générique
- * @author jtouzy
+ * @author Jérémy TOUZY
  * @param <T> Type d'objet modèle (Bean)
  */
 public interface DAO<T> {
+	/**
+	 * Récupération de la classe gérée par le DAO
+	 * @return Instance de la classe gérée par le DAO
+	 */
+	public Class<T> getDAOClass();
 	/**
 	 * Création d'un nouvel objet sur le SGBD
 	 * Pour une meilleure utilisation, les valeurs calculées automatiquement lors de la 

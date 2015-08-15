@@ -25,7 +25,7 @@ import com.jtouzy.cvapi.errors.SQLExecutionException;
 
 /**
  * Implémentation du DAO générique
- * @author jtouzy
+ * @author Jérémy TOUZY
  * @param <T> Type d'objet modèle (Bean)
  */
 public abstract class AbstractDAO<T> implements DAO<T> {
@@ -57,7 +57,7 @@ public abstract class AbstractDAO<T> implements DAO<T> {
 	 */
 	public AbstractDAO(Class<T> daoClass) {
 		this.daoClass = daoClass;
-		this.tableContext = DAOManager.get().getTableContext(daoClass);
+		this.tableContext = ModelContext.get().getTableContext(daoClass);
 		this.cache = new DAOCache<T>(daoClass);
 		
 		// Temporaire
@@ -68,6 +68,14 @@ public abstract class AbstractDAO<T> implements DAO<T> {
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public Class<T> getDAOClass() {
+		return this.daoClass;
+	}
+	
 	/**
 	 * {@inheritDoc}
 	 */
