@@ -1,4 +1,4 @@
-package com.jtouzy.cvapi;
+package com.jtouzy.cv.api;
 
 import javax.servlet.ServletException;
 

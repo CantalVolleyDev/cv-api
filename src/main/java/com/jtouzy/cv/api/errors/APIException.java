@@ -1,4 +1,4 @@
-package com.jtouzy.cvapi.errors;
+package com.jtouzy.cv.api.errors;
 
 public class APIException extends Exception {
 	private static final long serialVersionUID = 1L;

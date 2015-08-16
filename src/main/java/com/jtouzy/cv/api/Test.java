@@ -1,12 +1,12 @@
-package com.jtouzy.cvapi;
+package com.jtouzy.cv.api;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.List;
 
+import com.jtouzy.cv.model.classes.Season;
+import com.jtouzy.cv.model.dao.SeasonDAO;
 import com.jtouzy.dao.DAOManager;
-import com.jtouzy.cvapi.dao.SeasonDAO;
-import com.jtouzy.cvapi.model.Season;
 
 public class Test {
 	public static void main(String[] args) {
