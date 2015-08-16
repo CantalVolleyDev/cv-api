@@ -22,6 +22,6 @@ public class APIServlet extends ServletContainer {
 	public void init() 
 	throws ServletException {
 		super.init();
-		DAOManager.get();
+		DAOManager.init("com.jtouzy.cv.model.classes");
 	}
 }

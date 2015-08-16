@@ -27,6 +27,7 @@ public class Test {
 			//dao.delete(sai);
 			
 			Connection connection = DriverManager.getConnection("jdbc:postgresql://5.135.146.110:5432/jto_cvapi_dvt", "upublic", "jtogri%010811sqlpublic");
+			DAOManager.init("com.jtouzy.cv.model.classes");
 			SeasonDAO dao = DAOManager.get().getDAO(connection, SeasonDAO.class);
 			List<Season> lst = dao.queryAll();
 			System.out.println(lst);
