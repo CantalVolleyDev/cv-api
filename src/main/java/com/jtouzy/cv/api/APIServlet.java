@@ -5,6 +5,7 @@ import javax.servlet.ServletException;
 import org.glassfish.jersey.servlet.ServletContainer;
 
 import com.jtouzy.dao.DAOManager;
+import com.jtouzy.dao.errors.model.ModelClassDefinitionException;
 
 /**
  * Servlet générale de l'API
@@ -22,6 +23,10 @@ public class APIServlet extends ServletContainer {
 	public void init() 
 	throws ServletException {
 		super.init();
-		DAOManager.init("com.jtouzy.cv.model.classes");
+		try {
+			DAOManager.init("com.jtouzy.cv.model.classes");
+		} catch (ModelClassDefinitionException ex) {
+			throw new ServletException(ex);
+		}
 	}
 }
