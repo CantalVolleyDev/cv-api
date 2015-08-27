@@ -6,7 +6,7 @@
 	<display-name>CantalVolley Web API</display-name>
 	<servlet>
 		<servlet-name>API Servlet</servlet-name>
-		<servlet-class>com.jtouzy.cvapi.APIServlet</servlet-class>		
+		<servlet-class>com.jtouzy.cv.api.APIServlet</servlet-class>		
 	    <init-param>
 	        <param-name>jersey.config.server.provider.packages</param-name>
 	        <param-value>com.jtouzy.cv.api.resources</param-value>
