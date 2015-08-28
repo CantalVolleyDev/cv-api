@@ -4,6 +4,8 @@ import javax.servlet.ServletException;
 
 import org.glassfish.jersey.servlet.ServletContainer;
 
+import com.jtouzy.cv.api.config.AppConfig;
+import com.jtouzy.cv.api.errors.APIConfigurationException;
 import com.jtouzy.dao.DAOManager;
 import com.jtouzy.dao.errors.model.ModelClassDefinitionException;
 
@@ -24,8 +26,9 @@ public class APIServlet extends ServletContainer {
 	throws ServletException {
 		super.init();
 		try {
+			AppConfig.init();
 			DAOManager.init("com.jtouzy.cv.model.classes");
-		} catch (ModelClassDefinitionException ex) {
+		} catch (ModelClassDefinitionException | APIConfigurationException ex) {
 			throw new ServletException(ex);
 		}
 	}
