@@ -6,11 +6,15 @@
 	<display-name>CantalVolley Web API</display-name>
 	<servlet>
 		<servlet-name>API Servlet</servlet-name>
-		<servlet-class>com.jtouzy.cv.api.APIServlet</servlet-class>		
+		<servlet-class>com.jtouzy.cv.api.APIServlet</servlet-class>	
+		<init-param>
+            <param-name>javax.ws.rs.Application</param-name>
+            <param-value>com.jtouzy.cv.api.config.APIResourceConfig</param-value>
+        </init-param>	
 	    <init-param>
 	        <param-name>jersey.config.server.provider.packages</param-name>
 	        <param-value>com.jtouzy.cv.api.resources;com.jtouzy.cv.api.filters</param-value>
-	    </init-param>        
+	    </init-param>
 	    <load-on-startup>1</load-on-startup>
 	</servlet>
 	<servlet-mapping>
