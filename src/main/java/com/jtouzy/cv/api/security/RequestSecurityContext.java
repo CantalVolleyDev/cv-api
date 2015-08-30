@@ -1,15 +1,29 @@
 package com.jtouzy.cv.api.security;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+
 import javax.ws.rs.core.SecurityContext;
+
+import com.jtouzy.cv.api.config.AppConfig;
 
 public class RequestSecurityContext implements SecurityContext {
 	private Client clientInfos;
+	private Connection connection;
 	
-	public RequestSecurityContext() {
+	public RequestSecurityContext()
+	throws SQLException {
+		this(null);
 	}
 	
-	public RequestSecurityContext(Client client) {
+	public RequestSecurityContext(Client client)
+	throws SQLException {
 		this.clientInfos = client;
+		this.connection = AppConfig.getDataSource().getConnection();
+	}
+	
+	public Connection getConnection() {
+		return this.connection;
 	}
 	
 	@Override
