@@ -11,6 +11,7 @@ import javax.ws.rs.core.MediaType;
 
 import com.jtouzy.cv.api.config.AppConfig;
 import com.jtouzy.cv.api.errors.APIException;
+import com.jtouzy.cv.api.errors.ProgramException;
 import com.jtouzy.cv.model.classes.News;
 import com.jtouzy.cv.model.dao.NewsDAO;
 import com.jtouzy.dao.DAOManager;
@@ -29,7 +30,7 @@ public class NewsResource {
 			connection.close();
 			return news;
 		} catch (SQLException | DAOInstantiationException | QueryException ex) {
-			throw new APIException(ex);
+			throw new ProgramException(ex);
 		}
 	}
 }

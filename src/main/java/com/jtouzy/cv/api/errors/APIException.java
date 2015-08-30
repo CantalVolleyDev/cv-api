@@ -1,21 +1,26 @@
 package com.jtouzy.cv.api.errors;
 
-public class APIException extends Exception {
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
+
+public class APIException extends WebApplicationException {
 	private static final long serialVersionUID = 1L;
-
-	public APIException() {
-		super();
+	
+	public APIException(Response.Status status, Throwable cause) {
+		this(status, new ExceptionDescriptor(cause));
 	}
-
-	public APIException(String message, Throwable cause) {
-		super(message, cause);
+	
+	public APIException(Response.Status status, String message) {
+		this(status, new ExceptionDescriptor(message));
 	}
-
-	public APIException(String message) {
-		super(message);
+	
+	public APIException(Response.Status status, String message, Throwable cause) {
+		this(status, new ExceptionDescriptor(cause, message));
 	}
-
-	public APIException(Throwable cause) {
-		super(cause);
+	
+	private APIException(Response.Status status, ExceptionDescriptor descriptor) {
+		super(Response.status(status)
+			          .entity(descriptor)
+			          .build());
 	}
 }
