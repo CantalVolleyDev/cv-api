@@ -25,7 +25,9 @@ public class APIRequestEventListener implements RequestEventListener {
 				eventLog.append("Fin de la méthode de la ressource");
 				break;
 			case ON_EXCEPTION:
-				eventLog.append("Exception levée pendant la requête");
+				eventLog.append("Exception levée pendant la requête [")
+				        .append(event.getException())
+				        .append("]");
 				break;
 			case FINISHED:
 				eventLog.append("Fin de l'exécution de la requête")
