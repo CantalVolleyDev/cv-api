@@ -9,7 +9,9 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
+import javax.ws.rs.Produces;
 import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.MediaType;
 
 import com.jtouzy.cv.api.errors.APIException;
 import com.jtouzy.cv.api.errors.ProgramException;
@@ -22,6 +24,7 @@ import com.jtouzy.dao.errors.NullUniqueIndexException;
 import com.jtouzy.dao.errors.QueryException;
 import com.jtouzy.dao.errors.SQLExecutionException;
 
+@Produces(MediaType.APPLICATION_JSON)
 public class BasicResource<T, D extends DAO<T>> {
 	@Inject
 	protected ContainerRequestContext requestContext;

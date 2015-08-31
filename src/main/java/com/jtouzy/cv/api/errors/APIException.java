@@ -1,6 +1,7 @@
 package com.jtouzy.cv.api.errors;
 
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 public class APIException extends WebApplicationException {
@@ -20,6 +21,7 @@ public class APIException extends WebApplicationException {
 	
 	private APIException(Response.Status status, ExceptionDescriptor descriptor) {
 		super(Response.status(status)
+				      .type(MediaType.APPLICATION_JSON)
 			          .entity(descriptor)
 			          .build());
 	}
