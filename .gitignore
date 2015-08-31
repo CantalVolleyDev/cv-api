@@ -4,3 +4,4 @@
 target/
 doc/
 webapp.properties
+dbdump.xml

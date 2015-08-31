@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -42,7 +43,7 @@ public class BasicResource<T, D extends DAO<T>> {
 	
 	@POST
 	@RolesAllowed("admin")
-	public T create(T object)
+	public T create(@NotNull T object)
 	throws APIException {
 		try {
 			return DAOManager.getDAO(getRequestContext().getConnection(), daoClass).create(object);
@@ -53,7 +54,7 @@ public class BasicResource<T, D extends DAO<T>> {
 	
 	@PUT
 	@RolesAllowed("admin")
-	public T update(T object)
+	public T update(@NotNull T object)
 	throws APIException {
 		try {
 			return DAOManager.getDAO(getRequestContext().getConnection(), daoClass).update(object);
@@ -64,7 +65,7 @@ public class BasicResource<T, D extends DAO<T>> {
 	
 	@DELETE
 	@RolesAllowed("admin")
-	public void delete(T object)
+	public void delete(@NotNull T object)
 	throws APIException {
 		try {
 			DAOManager.getDAO(getRequestContext().getConnection(), daoClass).delete(object);
