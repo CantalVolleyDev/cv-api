@@ -39,6 +39,8 @@ public class APIEventListener implements ApplicationEventListener {
 		   .append("Requête n°")
 		   .append(requestCount)
 		   .append(" - ")
+		   .append(requestEvent.getContainerRequest().getMethod())
+		   .append(" ")
 		   .append(requestEvent.getContainerRequest().getUriInfo().getRequestUri());
 		System.out.println(log);
 		return new APIRequestEventListener();
