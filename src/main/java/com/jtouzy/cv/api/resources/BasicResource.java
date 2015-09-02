@@ -10,6 +10,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.MediaType;
 
@@ -23,12 +24,15 @@ import com.jtouzy.dao.errors.DAOInstantiationException;
 import com.jtouzy.dao.errors.NullUniqueIndexException;
 import com.jtouzy.dao.errors.QueryException;
 import com.jtouzy.dao.errors.SQLExecutionException;
+import com.jtouzy.dao.query.Query;
 
 @Produces(MediaType.APPLICATION_JSON)
 public class BasicResource<T, D extends DAO<T>> {
 	@Inject
 	protected ContainerRequestContext requestContext;
 	private Class<D> daoClass;
+	@QueryParam("limitTo")
+	protected Integer limitTo;
 	
 	public BasicResource(Class<D> daoClass) {
 		this.daoClass = daoClass;
@@ -38,7 +42,11 @@ public class BasicResource<T, D extends DAO<T>> {
 	public List<T> getAll()
 	throws APIException {
 		try {
-			return DAOManager.getDAO(getRequestContext().getConnection(), daoClass).queryAll();
+			System.out.println(limitTo);
+			Query<T> query = DAOManager.getDAO(getRequestContext().getConnection(), daoClass).query();
+			query.context()
+			     .limitTo(limitTo);
+			return query.many();
 		} catch (DAOInstantiationException | QueryException ex) {
 			throw new ProgramException(ex);
 		}
