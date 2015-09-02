@@ -4,8 +4,8 @@
   <groupId>com.jtouzy</groupId>
   <artifactId>cvapi</artifactId>
   <packaging>war</packaging>
-  <version>0.0.1-SNAPSHOT</version>
-  <name>CantalVolleyAPI</name>
+  <version>0.0.1</version>
+  <name>cv-api</name>
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
@@ -153,4 +153,6 @@
   		</dependency>
   	</dependencies>
   </dependencyManagement>
+  <url>http://github.com/CantalVolleyDev/cv-api</url>
+  <description>Webserver REST pour l'application cantalvolley</description>
 </project>
