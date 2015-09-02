@@ -18,6 +18,7 @@ public class AppConfig {
 	public static final String DB_JDBCURL_PROPERTY = "db.jdbcUrl";
 	public static final String DROPBOX_APP_CLIENT_TOKEN = "dbx.client.token";
 	public static final String DROPBOX_APP_NAME = "dbx.appname";
+	public static final String ORIGIN_ALLOWED = "origin.allowed";
 	
 	private static Properties properties;
 	private static HikariDataSource dataSource;
