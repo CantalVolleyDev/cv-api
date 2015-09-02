@@ -44,15 +44,7 @@ public class BasicResource<T, D extends DAO<T>> {
 	public List<T> getAll()
 	throws APIException {
 		try {
-			Query<T> query = DAOManager.getDAO(getRequestContext().getConnection(), daoClass).query();
-			Integer offset = null;
-			if (limitTo != null && page != null && page > 1) {
-				offset = limitTo * (page-1);
-			}
-			query.context()
-			     .limitTo(limitTo)
-			     .offset(offset);
-			return query.many();
+			return query().many();
 		} catch (DAOInstantiationException | QueryException ex) {
 			throw new ProgramException(ex);
 		}
@@ -89,6 +81,19 @@ public class BasicResource<T, D extends DAO<T>> {
 		} catch (DAOInstantiationException | SQLExecutionException | DAOCrudException | NullUniqueIndexException ex) {
 			throw new ProgramException(ex);
 		}
+	}
+	
+	protected Query<T> query()
+	throws DAOInstantiationException, QueryException {
+		Query<T> query = DAOManager.getDAO(getRequestContext().getConnection(), daoClass).query();
+		Integer offset = null;
+		if (limitTo != null && page != null && page > 1) {
+			offset = limitTo * (page-1);
+		}
+		query.context()
+		     .limitTo(limitTo)
+		     .offset(offset);
+		return query;
 	}
 	
 	protected RequestSecurityContext getRequestContext() {
