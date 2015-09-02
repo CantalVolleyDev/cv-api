@@ -5,6 +5,8 @@ import java.sql.SQLException;
 
 import javax.servlet.ServletException;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.servlet.ServletContainer;
 
 import com.jtouzy.cv.api.config.AppConfig;
@@ -22,6 +24,7 @@ import com.jtouzy.dao.errors.model.ModelClassDefinitionException;
  */
 public class APIServlet extends ServletContainer {
 	private static final long serialVersionUID = 1L;
+	private static final Logger logger = LogManager.getLogger(APIServlet.class);
 	
 	/**
 	 * Initialisation de la servlet
@@ -31,6 +34,7 @@ public class APIServlet extends ServletContainer {
 	@Override
 	public void init() 
 	throws ServletException {
+		logger.trace("Initialisation de la servlet");
 		super.init();
 		try {
 			AppConfig.init();
@@ -39,6 +43,7 @@ public class APIServlet extends ServletContainer {
 		} catch (ModelClassDefinitionException | APIConfigurationException ex) {
 			throw new ServletException(ex);
 		}
+		logger.trace("Fin d'initialisation de la servlet");
 	}
 	
 	/**
@@ -50,11 +55,13 @@ public class APIServlet extends ServletContainer {
 	 */
 	private void loadCachedData()
 	throws CacheLoadException {
+		logger.trace("Chargement des données en cache...");
 		try (Connection loadDataCacheConnection = AppConfig.getDataSource().getConnection()) {
 			SeasonDAO seasonDao = DAOManager.getDAO(loadDataCacheConnection, SeasonDAO.class);
 			seasonDao.getCurrentSeason();
 		} catch (SQLException | DAOInstantiationException | QueryException ex) {
 			throw new CacheLoadException(ex);
 		}
+		logger.trace("Fin du chargement des données en cache");
 	}
 }

@@ -1,21 +1,20 @@
 package com.jtouzy.cv.api.lifecycle;
 
-import java.time.LocalDateTime;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.server.monitoring.RequestEvent;
 import org.glassfish.jersey.server.monitoring.RequestEventListener;
 
 public class APIRequestEventListener implements RequestEventListener {
 	private long startTime;
+	private static final Logger logger = LogManager.getLogger(APIRequestEventListener.class);
 	
 	public APIRequestEventListener() {
 		this.startTime = System.currentTimeMillis();
 	}
+	
 	@Override
 	public void onEvent(RequestEvent event) {
-		StringBuilder log = new StringBuilder();
-		log.append(LocalDateTime.now())
-		   .append(" - ");
 		StringBuilder eventLog = new StringBuilder();
 		switch (event.getType()) {
 			case RESOURCE_METHOD_START:
@@ -40,10 +39,7 @@ public class APIRequestEventListener implements RequestEventListener {
 				break;
 		}
 		if (eventLog.length() > 0) {
-			System.out.println(log.append(eventLog)
-					              .append(" [")
-					              .append(event.getType())
-					              .append("]"));
+			logger.trace(eventLog);
 		}
 	}
 }
