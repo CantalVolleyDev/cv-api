@@ -33,6 +33,8 @@ public class BasicResource<T, D extends DAO<T>> {
 	private Class<D> daoClass;
 	@QueryParam("limitTo")
 	protected Integer limitTo;
+	@QueryParam("page")
+	protected Integer page;
 	
 	public BasicResource(Class<D> daoClass) {
 		this.daoClass = daoClass;
@@ -42,10 +44,14 @@ public class BasicResource<T, D extends DAO<T>> {
 	public List<T> getAll()
 	throws APIException {
 		try {
-			System.out.println(limitTo);
 			Query<T> query = DAOManager.getDAO(getRequestContext().getConnection(), daoClass).query();
+			Integer offset = null;
+			if (limitTo != null && page != null && page > 1) {
+				offset = limitTo * (page-1);
+			}
 			query.context()
-			     .limitTo(limitTo);
+			     .limitTo(limitTo)
+			     .offset(offset);
 			return query.many();
 		} catch (DAOInstantiationException | QueryException ex) {
 			throw new ProgramException(ex);
