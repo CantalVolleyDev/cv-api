@@ -1,6 +1,7 @@
 package com.jtouzy.cv.api.filters;
 
 import java.io.IOException;
+import java.sql.Connection;
 import java.sql.SQLException;
 
 import javax.ws.rs.container.ContainerRequestContext;
@@ -10,6 +11,7 @@ import javax.ws.rs.ext.Provider;
 
 import com.jtouzy.cv.api.config.AppConfig;
 import com.jtouzy.cv.api.security.RequestSecurityContext;
+import com.jtouzy.dao.DAOManager;
 
 @Provider
 public class ResponseFilter implements ContainerResponseFilter {	
@@ -22,7 +24,9 @@ public class ResponseFilter implements ContainerResponseFilter {
 		}
 		try {
 			RequestSecurityContext securityContext = (RequestSecurityContext)requestContext.getSecurityContext();
-			securityContext.getConnection().close();
+			Connection connection = securityContext.getConnection();
+			DAOManager.removeForConnection(connection);
+			connection.close();
 		} catch (SQLException ex) {
 			throw new IOException(ex);
 		}
