@@ -12,8 +12,8 @@ import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.input.SAXBuilder;
 
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
@@ -86,7 +86,7 @@ public class XmlBackUtils {
 	throws Exception {
 		//xmlValues = new HashMap<String, Map<String,Object>>();
 		Document doc = getBackDocument();
-		values = HashMultimap.create();
+		values = ArrayListMultimap.create();
 		loadDatabase(doc.getRootElement().getChild("database"));
 		System.out.println(objectsSummary);
 	}
@@ -222,10 +222,38 @@ public class XmlBackUtils {
 		usr.setIdentifier(1);
 		n1.setIdentifier(1);
 		n1.setAuthor(usr);
-		n1.setContent("Test");
+		n1.setContent("Cantalvolley.fr évolue! Toutes les semaines de nouvelles évolutions seront ajoutées au site.");
 		n1.setCreationDate(LocalDateTime.of(2015, 8, 27, 19, 00));
-		n1.setState(News.State.C);
-		n1.setTitle("Peau neuve!");
+		n1.setState(News.State.V);
+		n1.setTitle("Peau neuve");
+		n1.setCategory("Développement");
+		n1.setPublishDate(LocalDateTime.of(2015, 9, 4, 22, 00));
+		values.put(ModelContext.getTableContext("nws"), n1);
+		
+		n1 = new News();
+		usr = new User();
+		usr.setIdentifier(1);
+		n1.setIdentifier(1);
+		n1.setAuthor(usr);
+		n1.setContent("Aurillac Volley Ball : Les entraînements ont repris depuis le 2 septembre au gymnase des Camisières. Tous les lundis avant la reprise du championnat 4x4, des mini-tournois seront organisés pour préparer les équipes.");
+		n1.setCreationDate(LocalDateTime.of(2015, 9, 4, 20, 00));
+		n1.setState(News.State.V);
+		n1.setTitle("C'est la reprise");
+		n1.setCategory("Informations club");
+		n1.setPublishDate(LocalDateTime.of(2015, 9, 4, 22, 10));
+		values.put(ModelContext.getTableContext("nws"), n1);
+		
+		n1 = new News();
+		usr = new User();
+		usr.setIdentifier(1);
+		n1.setIdentifier(1);
+		n1.setAuthor(usr);
+		n1.setContent("Aurillac Volley Ball : L'assemblée générale du club aura lieu le 22 septembre 2015, au Parc Hélitas à 20h00.");
+		n1.setCreationDate(LocalDateTime.of(2015, 9, 4, 20, 15));
+		n1.setState(News.State.V);
+		n1.setTitle("Assemblée générale");
+		n1.setCategory("Informations club");
+		n1.setPublishDate(LocalDateTime.of(2015, 9, 4, 22, 15));
 		values.put(ModelContext.getTableContext("nws"), n1);
 	}
 	
