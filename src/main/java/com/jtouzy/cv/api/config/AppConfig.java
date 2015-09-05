@@ -1,10 +1,10 @@
 package com.jtouzy.cv.api.config;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Properties;
 
 import com.jtouzy.cv.api.errors.APIConfigurationException;
+import com.jtouzy.cv.api.utils.ResourceUtils;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
@@ -37,13 +37,10 @@ public class AppConfig {
 		return dataSource;
 	}
 	
-	private static void readProperties() 
+	private static void readProperties()
 	throws APIConfigurationException {
 		try {
-			ClassLoader classLoader = AppConfig.class.getClassLoader();
-			InputStream input = classLoader.getResourceAsStream("webapp.properties");
-			properties = new Properties();
-			properties.load(input);
+			properties = ResourceUtils.readProperties("webapp");
 		} catch (IOException ex) {
 			throw new APIConfigurationException(ex);
 		}
