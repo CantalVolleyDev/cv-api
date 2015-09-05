@@ -85,6 +85,15 @@
           		</execution>
         	</executions>
       	</plugin>
+      	<!-- MANUALLY:RUN WITH TOMCAT8 -->
+      	<plugin>
+			<groupId>org.apache.tomcat.maven</groupId>
+			<artifactId>tomcat7-maven-plugin</artifactId>
+			<version>2.2</version>
+			<configuration>
+				<port>8585</port>
+			</configuration>
+		</plugin>
 	</plugins>
   </build>
   <dependencyManagement>
