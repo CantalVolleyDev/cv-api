@@ -20,9 +20,9 @@ public class APIException extends WebApplicationException {
 	}
 	
 	private APIException(Response.Status status, ExceptionDescriptor descriptor) {
-		super(Response.status(status)
-				      .type(MediaType.APPLICATION_JSON)
-			          .entity(descriptor)
-			          .build());
+		super(descriptor.getCause(), Response.status(status)
+				                             .type(MediaType.APPLICATION_JSON)
+			                                 .entity(descriptor)
+			                                 .build());
 	}
 }
