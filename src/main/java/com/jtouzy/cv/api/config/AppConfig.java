@@ -1,6 +1,5 @@
 package com.jtouzy.cv.api.config;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -40,7 +39,8 @@ public class AppConfig {
 	private static void readProperties() 
 	throws APIConfigurationException {
 		try {
-			InputStream input = new FileInputStream("webapp.properties");
+			ClassLoader classLoader = AppConfig.class.getClassLoader();
+			InputStream input = classLoader.getResourceAsStream("webapp.properties");
 			properties = new Properties();
 			properties.load(input);
 		} catch (IOException ex) {
