@@ -4,4 +4,7 @@
 target/
 doc/
 webapp.properties
+webprod.properties
+tools.properties
+tomcat-deploy.commands
 dbdump.xml

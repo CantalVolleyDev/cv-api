@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+	<Appenders>
+		<RollingFile name="RollingFile" filename="/jto/products/cv/logs/webapp.log"
+					 filepattern="/jto/products/cv/logs/webapp.%d{yyyy-MM-dd}.log">
+			<PatternLayout pattern="%d{dd-MM-YYYY HH:mm:ss} [%p] - %m%n" />
+			<Policies>
+				<TimeBasedTriggeringPolicy />
+			</Policies>
+		</RollingFile>
+	</Appenders>
+	<Loggers>
+		<Root level="trace">
+			<AppenderRef ref="RollingFile" />
+		</Root>
+	</Loggers>
+</Configuration>
