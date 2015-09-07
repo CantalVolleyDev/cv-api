@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.Properties;
 
 import com.jtouzy.cv.api.errors.APIConfigurationException;
-import com.jtouzy.cv.api.utils.ResourceUtils;
+import com.jtouzy.utils.resources.ResourceUtils;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
