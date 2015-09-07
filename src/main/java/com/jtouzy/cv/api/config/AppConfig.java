@@ -16,8 +16,6 @@ public class AppConfig {
 	public static final String DB_DATABASE_PROPERTY = "db.databaseName";
 	public static final String DB_JDBCURL_PROPERTY = "db.jdbcUrl";
 	public static final String DB_DRIVER_CLASSNAME = "db.driverClassName";
-	public static final String DROPBOX_APP_CLIENT_TOKEN = "dbx.client.token";
-	public static final String DROPBOX_APP_NAME = "dbx.appname";
 	public static final String ORIGIN_ALLOWED = "origin.allowed";
 	
 	private static Properties properties;
