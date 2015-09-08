@@ -19,6 +19,8 @@ import com.jtouzy.dao.query.Query;
 public class CompetitionResource extends BasicResource<Competition, CompetitionDAO> {
 	@QueryParam("seasonId")
 	protected String seasonId;
+	@QueryParam("fillChampionships")
+	protected Boolean fillChampionships;
 	
 	public CompetitionResource() {
 		super(CompetitionDAO.class);
