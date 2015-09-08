@@ -24,20 +24,25 @@ import com.jtouzy.dao.errors.DAOInstantiationException;
 import com.jtouzy.dao.errors.NullUniqueIndexException;
 import com.jtouzy.dao.errors.QueryException;
 import com.jtouzy.dao.errors.SQLExecutionException;
+import com.jtouzy.dao.errors.model.FieldContextNotFoundException;
+import com.jtouzy.dao.errors.model.TableContextNotFoundException;
 import com.jtouzy.dao.query.Query;
+import com.jtouzy.dao.query.QueryCollection;
 
 @Produces(MediaType.APPLICATION_JSON)
 public class BasicResource<T, D extends DAO<T>> {
 	@Inject
 	protected ContainerRequestContext requestContext;
 	private Class<D> daoClass;
+	private Class<T> objectClass;
 	@QueryParam("limitTo")
 	protected Integer limitTo;
 	@QueryParam("page")
 	protected Integer page;
 	
-	public BasicResource(Class<D> daoClass) {
+	public BasicResource(Class<T> objectClass, Class<D> daoClass) {
 		this.daoClass = daoClass;
+		this.objectClass = objectClass;
 	}
 
 	@GET
@@ -86,14 +91,26 @@ public class BasicResource<T, D extends DAO<T>> {
 	protected Query<T> query()
 	throws DAOInstantiationException, QueryException {
 		Query<T> query = DAOManager.getDAO(getRequestContext().getConnection(), daoClass).query();
+		manageParams(query);
+		return query;
+	}
+	
+	protected <C> QueryCollection<T,C> queryCollection(Class<C> collectionClass)
+	throws TableContextNotFoundException, FieldContextNotFoundException {
+		QueryCollection<T,C> query = QueryCollection.build(getRequestContext().getConnection(), this.objectClass, collectionClass);
+		manageParams(query);
+		return query;
+	}
+	
+	protected void manageParams(Query<?> query)
+	throws APIException {
 		Integer offset = null;
 		if (limitTo != null && page != null && page > 1) {
 			offset = limitTo * (page-1);
 		}
 		query.context()
 		     .limitTo(limitTo)
-		     .offset(offset);
-		return query;
+		     .offset(offset);		
 	}
 	
 	protected RequestSecurityContext getRequestContext() {

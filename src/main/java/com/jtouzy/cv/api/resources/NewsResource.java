@@ -18,7 +18,7 @@ public class NewsResource extends BasicResource<News, NewsDAO> {
 	protected Boolean published;
 	
 	public NewsResource() {
-		super(NewsDAO.class);
+		super(News.class, NewsDAO.class);
 	}
 	
 	@Override

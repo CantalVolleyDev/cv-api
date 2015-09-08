@@ -1,10 +1,15 @@
 package com.jtouzy.cv.api.resources;
 
+import java.util.List;
+
 import javax.annotation.security.PermitAll;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 
+import com.jtouzy.cv.api.errors.APIException;
+import com.jtouzy.cv.api.errors.ProgramException;
 import com.jtouzy.cv.api.errors.SeasonNotFoundException;
+import com.jtouzy.cv.model.classes.Championship;
 import com.jtouzy.cv.model.classes.Competition;
 import com.jtouzy.cv.model.classes.Season;
 import com.jtouzy.cv.model.dao.CompetitionDAO;
@@ -12,6 +17,8 @@ import com.jtouzy.cv.model.dao.SeasonDAO;
 import com.jtouzy.dao.DAOManager;
 import com.jtouzy.dao.errors.DAOInstantiationException;
 import com.jtouzy.dao.errors.QueryException;
+import com.jtouzy.dao.errors.model.FieldContextNotFoundException;
+import com.jtouzy.dao.errors.model.TableContextNotFoundException;
 import com.jtouzy.dao.query.Query;
 
 @Path("/competitions")
@@ -23,18 +30,34 @@ public class CompetitionResource extends BasicResource<Competition, CompetitionD
 	protected Boolean fillChampionships;
 	
 	public CompetitionResource() {
-		super(CompetitionDAO.class);
-	}	
+		super(Competition.class, CompetitionDAO.class);
+	}
 	
 	@Override
-	protected Query<Competition> query()
-	throws DAOInstantiationException, QueryException {
-		Query<Competition> query = super.query();
-		Integer seasonID = getSeasonIDWithParam();
-		if (seasonID != null) {
-			query.context().addEqualsCriterion(Competition.SEASON_FIELD, seasonID);
+	public List<Competition> getAll() 
+	throws APIException {
+		try {
+			if (fillChampionships != null && fillChampionships) {
+				return queryCollection(Championship.class).fill();
+			}
+			return super.getAll();
+		} catch (TableContextNotFoundException | FieldContextNotFoundException | QueryException ex) {
+			throw new ProgramException(ex);
 		}
-		return query;
+	}
+	
+	@Override
+	protected void manageParams(Query<?> query)
+	throws APIException {
+		try {
+			super.manageParams(query);
+			Integer seasonID = getSeasonIDWithParam();
+			if (seasonID != null) {
+				query.context().addEqualsCriterion(Competition.TABLE, Competition.SEASON_FIELD, seasonID);
+			}
+		} catch (SeasonNotFoundException | DAOInstantiationException | QueryException ex) {
+			throw new ProgramException(ex);
+		}
 	}
 	
 	private Integer getSeasonIDWithParam()
