@@ -1,5 +1,8 @@
 package com.jtouzy.cv.api.lifecycle;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.server.monitoring.RequestEvent;
@@ -24,8 +27,11 @@ public class APIRequestEventListener implements RequestEventListener {
 				eventLog.append("Fin de la méthode de la ressource");
 				break;
 			case ON_EXCEPTION:
+				StringWriter sw = new StringWriter();
+				event.getException().printStackTrace(new PrintWriter(sw));
 				eventLog.append("Exception levée pendant la requête [")
 				        .append(event.getException())
+				        .append(sw.toString())
 				        .append("]");
 				break;
 			case FINISHED:
