@@ -1,5 +1,6 @@
 package com.jtouzy.cv.api.resources;
 
+import java.time.format.DateTimeFormatter;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -27,14 +28,15 @@ public class ChampionshipResource extends BasicResource<Championship, Championsh
 	
 	@GET
 	@Path("/{id}/previewCalendar")
-	@Produces(MediaType.TEXT_HTML)
+	@Produces(MediaType.TEXT_HTML + ";charset=utf-8")
 	public String previewCalendar(@PathParam("id") Integer championshipId)
 	throws CalendarGenerationException, DAOInstantiationException {
 		final StringBuilder text = new StringBuilder();
 		text.append("<html><head><title>Prévisualisation</title></head><body>");
 		MatchDAO dao = DAOManager.getDAO(getRequestContext().getConnection(), MatchDAO.class);
-		List<Match> matchs = dao.buildCalendar(championshipId, false);
+		List<Match> matchs = dao.buildCalendar(championshipId, true);
 		
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE dd-MM-yyyy, HH:mm");
 		Map<Integer, List<Match>> matchsByStep = matchs.stream()
 				                                       .collect(Collectors.groupingBy(m -> m.getStep()));
 		Iterator<Map.Entry<Integer, List<Match>>> it = matchsByStep.entrySet().iterator();
@@ -51,6 +53,9 @@ public class ChampionshipResource extends BasicResource<Championship, Championsh
 				text.append(m.getFirstTeam().getLabel())
 				    .append(" - ")
 				    .append(m.getSecondTeam().getLabel())
+				    .append(" (")
+				    .append(m.getDate().format(formatter))
+				    .append(")")
 				    .append("<br>");
 			});
 			if (it.hasNext())
