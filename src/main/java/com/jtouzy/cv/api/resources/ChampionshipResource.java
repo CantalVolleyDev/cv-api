@@ -15,9 +15,8 @@ import javax.ws.rs.core.MediaType;
 import com.jtouzy.cv.model.classes.Championship;
 import com.jtouzy.cv.model.classes.Match;
 import com.jtouzy.cv.model.dao.ChampionshipDAO;
-import com.jtouzy.cv.model.dao.MatchDAO;
 import com.jtouzy.cv.model.errors.CalendarGenerationException;
-import com.jtouzy.dao.DAOManager;
+import com.jtouzy.cv.model.utils.ChampionshipCalendarGenerator;
 import com.jtouzy.dao.errors.DAOInstantiationException;
 
 @Path("/championships")
@@ -33,8 +32,7 @@ public class ChampionshipResource extends BasicResource<Championship, Championsh
 	throws CalendarGenerationException, DAOInstantiationException {
 		final StringBuilder text = new StringBuilder();
 		text.append("<html><head><title>Prévisualisation</title></head><body>");
-		MatchDAO dao = DAOManager.getDAO(getRequestContext().getConnection(), MatchDAO.class);
-		List<Match> matchs = dao.buildCalendar(championshipId, true);
+		List<Match> matchs = ChampionshipCalendarGenerator.listMatchs(getRequestContext().getConnection(), championshipId, true);
 		
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE dd-MM-yyyy, HH:mm");
 		Map<Integer, List<Match>> matchsByStep = matchs.stream()
