@@ -113,6 +113,11 @@ public class BasicResource<T, D extends DAO<T>> {
 		     .offset(offset);		
 	}
 	
+	protected <DA extends DAO<TP>,TP> DA getDAO(Class<DA> daoClass)
+	throws DAOInstantiationException {
+		return DAOManager.getDAO(getRequestContext().getConnection(), daoClass);
+	}
+	
 	protected RequestSecurityContext getRequestContext() {
 		/** Ne pas récupérer directement en injectant le SecurityContext, car Jersey injecte un SecurityContextInjectee */
 		return (RequestSecurityContext)requestContext.getSecurityContext();
