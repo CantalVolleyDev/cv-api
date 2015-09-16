@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -16,6 +17,7 @@ import com.jtouzy.cv.model.classes.Championship;
 import com.jtouzy.cv.model.classes.Match;
 import com.jtouzy.cv.model.dao.ChampionshipDAO;
 import com.jtouzy.cv.model.errors.CalendarGenerationException;
+import com.jtouzy.cv.model.errors.RankingsCalculateException;
 import com.jtouzy.cv.model.utils.ChampionshipCalendarGenerator;
 import com.jtouzy.dao.errors.DAOInstantiationException;
 
@@ -23,6 +25,18 @@ import com.jtouzy.dao.errors.DAOInstantiationException;
 public class ChampionshipResource extends BasicResource<Championship, ChampionshipDAO> {
 	public ChampionshipResource() {
 		super(Championship.class, ChampionshipDAO.class);
+	}
+	
+	@POST
+	@Path("/{id}/calculateRankings")
+	public void calculateRankings(@PathParam("id") Integer championshipId)
+	throws RankingsCalculateException {
+		try {
+			ChampionshipDAO dao = getDAO(ChampionshipDAO.class);
+			dao.calculateRankings(championshipId);
+		} catch (DAOInstantiationException ex) {
+			throw new RankingsCalculateException(ex);
+		}
 	}
 	
 	@GET
