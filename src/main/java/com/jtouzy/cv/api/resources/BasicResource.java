@@ -3,20 +3,16 @@ package com.jtouzy.cv.api.resources;
 import java.util.List;
 
 import javax.annotation.security.RolesAllowed;
-import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.MediaType;
 
 import com.jtouzy.cv.api.errors.APIException;
 import com.jtouzy.cv.api.errors.ProgramException;
-import com.jtouzy.cv.api.security.RequestSecurityContext;
 import com.jtouzy.dao.DAO;
 import com.jtouzy.dao.DAOManager;
 import com.jtouzy.dao.errors.DAOCrudException;
@@ -30,15 +26,9 @@ import com.jtouzy.dao.query.Query;
 import com.jtouzy.dao.query.QueryCollection;
 
 @Produces(MediaType.APPLICATION_JSON)
-public class BasicResource<T, D extends DAO<T>> {
-	@Inject
-	protected ContainerRequestContext requestContext;
+public class BasicResource<T, D extends DAO<T>> extends GenericResource {
 	private Class<D> daoClass;
 	private Class<T> objectClass;
-	@QueryParam("limitTo")
-	protected Integer limitTo;
-	@QueryParam("page")
-	protected Integer page;
 	
 	public BasicResource(Class<T> objectClass, Class<D> daoClass) {
 		this.daoClass = daoClass;
@@ -101,26 +91,4 @@ public class BasicResource<T, D extends DAO<T>> {
 		manageParams(query);
 		return query;
 	}
-	
-	protected void manageParams(Query<?> query)
-	throws APIException {
-		Integer offset = null;
-		if (limitTo != null && page != null && page > 1) {
-			offset = limitTo * (page-1);
-		}
-		query.context()
-		     .limitTo(limitTo)
-		     .offset(offset);		
-	}
-	
-	protected <DA extends DAO<TP>,TP> DA getDAO(Class<DA> daoClass)
-	throws DAOInstantiationException {
-		return DAOManager.getDAO(getRequestContext().getConnection(), daoClass);
-	}
-	
-	protected RequestSecurityContext getRequestContext() {
-		/** Ne pas récupérer directement en injectant le SecurityContext, car Jersey injecte un SecurityContextInjectee */
-		return (RequestSecurityContext)requestContext.getSecurityContext();
-	}
-	
 }
