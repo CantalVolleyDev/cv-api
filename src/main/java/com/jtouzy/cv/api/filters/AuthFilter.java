@@ -3,6 +3,7 @@ package com.jtouzy.cv.api.filters;
 import java.io.IOException;
 import java.sql.SQLException;
 
+import javax.annotation.Priority;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.PreMatching;
@@ -17,6 +18,7 @@ import com.jtouzy.cv.api.security.RequestSecurityContext;
 /** PreMatching est nécessaire sinon l'authentification passe avant le RolesAllowedDynamicFeature */
 @PreMatching
 @Provider
+@Priority(1000)
 public class AuthFilter implements ContainerRequestFilter {
 	private static final Logger logger = LogManager.getLogger(AuthFilter.class);
 	
