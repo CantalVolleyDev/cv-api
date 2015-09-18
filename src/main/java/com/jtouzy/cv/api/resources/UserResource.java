@@ -47,10 +47,11 @@ public class UserResource extends GenericResource {
 	
 	private boolean checkPassword(User user, String password)
 	throws LoginException {
+		String salt = user.getPassword().substring(0, 64);
 		String validHash = user.getPassword().substring(64);
 		HashFunction hashFunction = Hashing.sha256();
 		HashCode hashCode = hashFunction.newHasher()
-				                        .putString(password, Charsets.UTF_8)
+				                        .putString(password + salt, Charsets.UTF_8)
 				                        .hash();
 		return (hashCode.toString().equals(validHash));
 	}
