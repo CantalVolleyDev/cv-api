@@ -17,6 +17,7 @@ import com.jtouzy.cv.model.dao.SeasonDAO;
 import com.jtouzy.dao.DAOManager;
 import com.jtouzy.dao.errors.DAOInstantiationException;
 import com.jtouzy.dao.errors.QueryException;
+import com.jtouzy.dao.errors.model.ColumnContextNotFoundException;
 import com.jtouzy.dao.errors.model.FieldContextNotFoundException;
 import com.jtouzy.dao.errors.model.TableContextNotFoundException;
 import com.jtouzy.dao.query.Query;
@@ -41,7 +42,7 @@ public class CompetitionResource extends BasicResource<Competition, CompetitionD
 				return queryCollection(Championship.class).fill();
 			}
 			return super.getAll();
-		} catch (TableContextNotFoundException | FieldContextNotFoundException | QueryException ex) {
+		} catch (TableContextNotFoundException | ColumnContextNotFoundException | FieldContextNotFoundException | QueryException ex) {
 			throw new ProgramException(ex);
 		}
 	}

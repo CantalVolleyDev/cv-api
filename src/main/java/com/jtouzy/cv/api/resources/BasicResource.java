@@ -20,6 +20,7 @@ import com.jtouzy.dao.errors.DAOInstantiationException;
 import com.jtouzy.dao.errors.NullUniqueIndexException;
 import com.jtouzy.dao.errors.QueryException;
 import com.jtouzy.dao.errors.SQLExecutionException;
+import com.jtouzy.dao.errors.model.ColumnContextNotFoundException;
 import com.jtouzy.dao.errors.model.FieldContextNotFoundException;
 import com.jtouzy.dao.errors.model.TableContextNotFoundException;
 import com.jtouzy.dao.query.Query;
@@ -86,7 +87,7 @@ public class BasicResource<T, D extends DAO<T>> extends GenericResource {
 	}
 	
 	protected <C> QueryCollection<T,C> queryCollection(Class<C> collectionClass)
-	throws TableContextNotFoundException, FieldContextNotFoundException {
+	throws TableContextNotFoundException, ColumnContextNotFoundException, FieldContextNotFoundException {
 		QueryCollection<T,C> query = QueryCollection.build(getRequestContext().getConnection(), this.objectClass, collectionClass);
 		manageParams(query);
 		return query;
