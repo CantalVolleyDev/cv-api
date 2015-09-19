@@ -62,6 +62,14 @@ public class UserResource extends GenericResource {
 		return rB.build();
 	}
 	
+	@POST
+	@Path("/logout")
+	public Response logout() {
+		return Response.status(Response.Status.OK)
+				       .cookie(createAuthCookie())
+				       .build();
+	}
+	
 	private void checkLoginParamsNotNull(UserLoginParameters logParameters)
 	throws LoginException {
 		if (logParameters == null || 
@@ -83,8 +91,14 @@ public class UserResource extends GenericResource {
 		}
 	}
 	
+	private NewCookie createAuthCookie() {
+		return createAuthCookie(null);
+	}
+	
 	private NewCookie createAuthCookie(User user) {
 		return new NewCookie(Client.AUTHENTIFICATION_COOKIE_NAME, 
-				             TokenHelper.getUserToken(user), "/", "", "", NewCookie.DEFAULT_MAX_AGE, false, true);
+				             user == null ? "deleted" : TokenHelper.getUserToken(user), 
+				             "/", "", "", 
+				             user == null ? 0 : NewCookie.DEFAULT_MAX_AGE, false, true);
 	}
 }
