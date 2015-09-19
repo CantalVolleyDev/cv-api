@@ -16,4 +16,8 @@ public class Client implements Principal {
 	public String getName() {
 		return this.user.getFirstName() + this.user.getName();
 	}
+	
+	public User getUser() {
+		return this.user;
+	}
 }
