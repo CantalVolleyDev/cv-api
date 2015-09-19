@@ -11,9 +11,7 @@ public class RequestSecurityContext implements SecurityContext {
 	private Client clientInfos;
 	private Connection connection;
 	
-	public RequestSecurityContext()
-	throws SQLException {
-		this(null);
+	public RequestSecurityContext() {
 	}
 	
 	public RequestSecurityContext(Client client)

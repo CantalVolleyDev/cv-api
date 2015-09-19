@@ -2,16 +2,18 @@ package com.jtouzy.cv.api.security;
 
 import java.security.Principal;
 
+import com.jtouzy.cv.model.classes.User;
+
 public class Client implements Principal {
 	public static final String AUTHENTIFICATION_COOKIE_NAME = "X-CvAuth";
-	private String name;
+	private User user;
 	
-	public Client(String name) {
-		this.name = name;
+	public Client(User user) {
+		this.user = user;
 	}
 	
 	@Override
 	public String getName() {
-		return this.name;
+		return this.user.getFirstName() + this.user.getName();
 	}
 }

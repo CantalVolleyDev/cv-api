@@ -8,6 +8,7 @@ import com.jtouzy.cv.api.errors.mappers.BeanValidationExceptionMapper;
 import com.jtouzy.cv.api.filters.AuthFilter;
 import com.jtouzy.cv.api.filters.OptionMethodFilter;
 import com.jtouzy.cv.api.filters.ResponseFilter;
+import com.jtouzy.cv.api.filters.SecurityInitializationFilter;
 import com.jtouzy.cv.api.json.GensonProvider;
 import com.jtouzy.cv.api.lifecycle.APIEventListener;
 
@@ -19,8 +20,9 @@ public class APIResourceConfig extends ResourceConfig {
 		// Ecouteurs
 		register(APIEventListener.class);
 		// Filtres
-		register(AuthFilter.class);
+		register(SecurityInitializationFilter.class);
 		register(OptionMethodFilter.class);
+		register(AuthFilter.class);
 		register(ResponseFilter.class);
 		// Transformations d'exceptions
 		register(APIExceptionMapper.class);

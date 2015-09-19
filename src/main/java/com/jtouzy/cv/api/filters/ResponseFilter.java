@@ -26,8 +26,10 @@ public class ResponseFilter implements ContainerResponseFilter {
 		try {
 			RequestSecurityContext securityContext = (RequestSecurityContext)requestContext.getSecurityContext();
 			Connection connection = securityContext.getConnection();
-			DAOManager.removeForConnection(connection);
-			connection.close();
+			if (connection != null) {
+				DAOManager.removeForConnection(connection);
+				connection.close();
+			}
 		} catch (SQLException ex) {
 			throw new IOException(ex);
 		}
