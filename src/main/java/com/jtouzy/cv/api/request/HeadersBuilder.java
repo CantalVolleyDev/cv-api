@@ -34,11 +34,13 @@ public class HeadersBuilder {
 					Optional<String> opt = authorized.stream().filter(d -> d.equals(origin)).findFirst();
 					if (opt.isPresent()) {
 						this.headers.put("Access-Control-Allow-Origin", opt.get());
+						this.headers.put("Access-Control-Allow-Credentials", "true");
 					}
 				}
 				
 			} else {
 				this.headers.put("Access-Control-Allow-Origin", property);
+				this.headers.put("Access-Control-Allow-Credentials", "true");
 			}
 		}
 	}
