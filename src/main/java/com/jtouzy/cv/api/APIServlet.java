@@ -59,6 +59,7 @@ public class APIServlet extends ServletContainer {
 		try (Connection loadDataCacheConnection = AppConfig.getDataSource().getConnection()) {
 			SeasonDAO seasonDao = DAOManager.getDAO(loadDataCacheConnection, SeasonDAO.class);
 			seasonDao.getCurrentSeason();
+			DAOManager.removeForConnection(loadDataCacheConnection);
 		} catch (SQLException | DAOInstantiationException | QueryException ex) {
 			throw new CacheLoadException(ex);
 		}

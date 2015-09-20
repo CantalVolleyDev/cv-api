@@ -50,6 +50,7 @@ public class AuthFilter implements ContainerRequestFilter {
 				User user = null;
 				try {
 					user = DAOManager.getDAO(temporaryConnection, UserDAO.class).findByMail(mail);
+					DAOManager.removeForConnection(temporaryConnection);
 				} catch (UserNotFoundException ex) {}
 				if (user != null) {
 					client = new Client(user);
@@ -59,7 +60,6 @@ public class AuthFilter implements ContainerRequestFilter {
 				} else {
 					logger.trace("Clé d'authentification erronée pour la requête");
 				}
-				securityContext = new RequestSecurityContext(client);
 			} else {
 				logger.trace("Aucune authentification d'utilisateur pour la requête");
 			}
