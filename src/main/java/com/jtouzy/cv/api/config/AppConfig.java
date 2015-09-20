@@ -17,6 +17,7 @@ public class AppConfig {
 	public static final String DB_JDBCURL_PROPERTY = "db.jdbcUrl";
 	public static final String DB_DRIVER_CLASSNAME = "db.driverClassName";
 	public static final String ORIGIN_ALLOWED = "origin.allowed";
+	public static final String IMAGES_PATH = "image.path";
 	
 	private static Properties properties;
 	private static HikariDataSource dataSource;

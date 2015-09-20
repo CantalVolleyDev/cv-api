@@ -1,5 +1,6 @@
 package com.jtouzy.cv.api.resources;
 
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.NewCookie;
@@ -15,13 +16,23 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
+import com.jtouzy.cv.api.errors.APIException;
 import com.jtouzy.cv.api.errors.LoginException;
+import com.jtouzy.cv.api.images.ImageFinder;
 import com.jtouzy.cv.api.security.Client;
 import com.jtouzy.cv.api.security.TokenHelper;
+import com.jtouzy.cv.model.classes.SeasonTeamPlayer;
+import com.jtouzy.cv.model.classes.Team;
 import com.jtouzy.cv.model.classes.User;
+import com.jtouzy.cv.model.dao.MatchDAO;
+import com.jtouzy.cv.model.dao.SeasonDAO;
+import com.jtouzy.cv.model.dao.SeasonTeamPlayerDAO;
 import com.jtouzy.cv.model.dao.UserDAO;
 import com.jtouzy.dao.errors.DAOInstantiationException;
 import com.jtouzy.dao.errors.QueryException;
+import com.jtouzy.dao.errors.model.ColumnContextNotFoundException;
+import com.jtouzy.dao.errors.model.TableContextNotFoundException;
+import com.jtouzy.dao.query.Query;
 
 @Path("/user")
 public class UserResource extends GenericResource {
@@ -68,6 +79,26 @@ public class UserResource extends GenericResource {
 		return Response.status(Response.Status.OK)
 				       .cookie(createAuthCookie())
 				       .build();
+	}
+	
+	@GET
+	@Path("/account")
+	public AccountInfos getAccountInfos() {
+		try {
+			AccountInfos infos = new AccountInfos();
+			Integer currentSeason = getDAO(SeasonDAO.class).getCurrentSeason().getIdentifier();
+			Integer currentUser = getRequestContext().getUserPrincipal().getUser().getIdentifier();
+			Query<SeasonTeamPlayer> queryTeam = getDAO(SeasonTeamPlayerDAO.class).query();
+			queryTeam.context().addDirectJoin(Team.class);
+			queryTeam.context().addEqualsCriterion(SeasonTeamPlayer.PLAYER_FIELD, currentUser);
+			queryTeam.context().addEqualsCriterion(SeasonTeamPlayer.SEASON_FIELD, currentSeason);
+			infos.setTeams(queryTeam.many());
+			infos.setMatchs(getDAO(MatchDAO.class).getMatchs(currentSeason, currentUser));
+			infos.setUploadImage(ImageFinder.isUserImageExists(currentUser));
+			return infos;
+		} catch (DAOInstantiationException | TableContextNotFoundException | ColumnContextNotFoundException | QueryException ex) {
+			throw new APIException(Response.Status.INTERNAL_SERVER_ERROR, ex);
+		}
 	}
 	
 	private void checkLoginParamsNotNull(UserLoginParameters logParameters)
