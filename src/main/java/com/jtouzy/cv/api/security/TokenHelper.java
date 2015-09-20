@@ -10,7 +10,7 @@ import com.jtouzy.cv.model.classes.User;
 
 public class TokenHelper {
 	private static final String tokenChars = "azertyuiopmlkjhgfdsqwxcvnAZERTYUIOPMLKJHGFDSQWXCVN0987654321";
-	private static final BiMap<String, String> tokenReplacements = ImmutableBiMap.of("@", "b", ".", "B");
+	private static final BiMap<String, String> tokenReplacements = ImmutableBiMap.of("@", ")", ".", "(");
 	
 	public static String getUserToken(User user) {
 		StringBuilder token = new StringBuilder();
