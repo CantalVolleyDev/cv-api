@@ -10,6 +10,9 @@
 		</RollingFile>
 	</Appenders>
 	<Loggers>
+		<Logger name="com.zaxxer.hikari" level="error">
+      		<AppenderRef ref="RollingFile"/>
+    	</Logger> 
 		<Root level="trace">
 			<AppenderRef ref="RollingFile" />
 		</Root>

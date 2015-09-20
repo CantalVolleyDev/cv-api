@@ -6,11 +6,9 @@
 		</Console>
 	</Appenders>
 	<Loggers>
-	    <!--
-	    <Logger name="com.zaxxer.hikari.HikariConfig" level="trace">
+	    <Logger name="com.zaxxer.hikari" level="error">
       		<AppenderRef ref="Console"/>
     	</Logger> 
-    	-->
 		<Root level="trace">
 			<AppenderRef ref="Console" />
 		</Root>
