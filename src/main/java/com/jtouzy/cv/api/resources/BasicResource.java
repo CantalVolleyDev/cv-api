@@ -36,9 +36,9 @@ import com.jtouzy.dao.query.QueryCollection;
 public class BasicResource<T, D extends DAO<T>> extends GenericResource {
 	private Class<D> daoClass;
 	private Class<T> objectClass;
-	@QueryParam("seasonId")
+	@QueryParam("season")
 	protected String seasonId;
-	@QueryParam("userId")
+	@QueryParam("user")
 	protected String userId;
 	
 	public BasicResource(Class<T> objectClass, Class<D> daoClass) {
