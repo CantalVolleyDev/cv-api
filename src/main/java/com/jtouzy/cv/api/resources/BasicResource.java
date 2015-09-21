@@ -16,6 +16,7 @@ import com.jtouzy.cv.api.errors.APIException;
 import com.jtouzy.cv.api.errors.ProgramException;
 import com.jtouzy.cv.api.errors.SeasonNotFoundException;
 import com.jtouzy.cv.api.security.Client;
+import com.jtouzy.cv.api.security.Roles;
 import com.jtouzy.cv.model.classes.Season;
 import com.jtouzy.cv.model.dao.SeasonDAO;
 import com.jtouzy.cv.model.errors.UserNotFoundException;
@@ -57,7 +58,7 @@ public class BasicResource<T, D extends DAO<T>> extends GenericResource {
 	}
 	
 	@POST
-	@RolesAllowed("admin")
+	@RolesAllowed(Roles.ADMIN)
 	public T create(@NotNull T object)
 	throws APIException {
 		try {
@@ -68,7 +69,7 @@ public class BasicResource<T, D extends DAO<T>> extends GenericResource {
 	}
 	
 	@PUT
-	@RolesAllowed("admin")
+	@RolesAllowed(Roles.ADMIN)
 	public T update(@NotNull T object)
 	throws APIException {
 		try {
@@ -79,7 +80,7 @@ public class BasicResource<T, D extends DAO<T>> extends GenericResource {
 	}
 	
 	@DELETE
-	@RolesAllowed("admin")
+	@RolesAllowed(Roles.ADMIN)
 	public void delete(@NotNull T object)
 	throws APIException {
 		try {

@@ -31,8 +31,11 @@ public class RequestSecurityContext implements SecurityContext {
 
 	@Override
 	public boolean isUserInRole(String role) {
-		if (role.equals("admin") && clientInfos != null && clientInfos.getName().equals("JTO")) {
-			return true;
+		if (clientInfos != null) {
+			if (role.equals(Roles.CONNECTED))
+				return true;
+			else if (role.equals(Roles.ADMIN) && clientInfos.getUser().isAdministrator())
+				return true;
 		}
 		return false;
 	}
