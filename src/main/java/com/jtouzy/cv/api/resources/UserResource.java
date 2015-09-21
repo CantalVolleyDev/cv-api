@@ -1,5 +1,6 @@
 package com.jtouzy.cv.api.resources;
 
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -20,6 +21,7 @@ import com.jtouzy.cv.api.errors.APIException;
 import com.jtouzy.cv.api.errors.LoginException;
 import com.jtouzy.cv.api.images.ImageFinder;
 import com.jtouzy.cv.api.security.Client;
+import com.jtouzy.cv.api.security.Roles;
 import com.jtouzy.cv.api.security.TokenHelper;
 import com.jtouzy.cv.model.classes.SeasonTeamPlayer;
 import com.jtouzy.cv.model.classes.Team;
@@ -75,6 +77,7 @@ public class UserResource extends GenericResource {
 	
 	@POST
 	@Path("/logout")
+	@RolesAllowed(Roles.CONNECTED)
 	public Response logout() {
 		return Response.status(Response.Status.OK)
 				       .cookie(createAuthCookie())
@@ -83,6 +86,7 @@ public class UserResource extends GenericResource {
 	
 	@GET
 	@Path("/account")
+	@RolesAllowed(Roles.CONNECTED)
 	public AccountInfos getAccountInfos() {
 		try {
 			AccountInfos infos = new AccountInfos();
