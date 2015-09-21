@@ -24,9 +24,7 @@ import com.jtouzy.dao.DAO;
 import com.jtouzy.dao.DAOManager;
 import com.jtouzy.dao.errors.DAOCrudException;
 import com.jtouzy.dao.errors.DAOInstantiationException;
-import com.jtouzy.dao.errors.NullUniqueIndexException;
 import com.jtouzy.dao.errors.QueryException;
-import com.jtouzy.dao.errors.SQLExecutionException;
 import com.jtouzy.dao.errors.model.ColumnContextNotFoundException;
 import com.jtouzy.dao.errors.model.FieldContextNotFoundException;
 import com.jtouzy.dao.errors.model.TableContextNotFoundException;
@@ -63,7 +61,7 @@ public class BasicResource<T, D extends DAO<T>> extends GenericResource {
 	throws APIException {
 		try {
 			return DAOManager.getDAO(getRequestContext().getConnection(), daoClass).create(object);
-		} catch (DAOInstantiationException | SQLExecutionException | DAOCrudException ex) {
+		} catch (DAOInstantiationException | DAOCrudException ex) {
 			throw new ProgramException(ex);
 		}
 	}
@@ -74,7 +72,7 @@ public class BasicResource<T, D extends DAO<T>> extends GenericResource {
 	throws APIException {
 		try {
 			return DAOManager.getDAO(getRequestContext().getConnection(), daoClass).update(object);
-		} catch (DAOInstantiationException | SQLExecutionException | DAOCrudException | NullUniqueIndexException ex) {
+		} catch (DAOInstantiationException | DAOCrudException ex) {
 			throw new ProgramException(ex);
 		}
 	}
@@ -85,7 +83,7 @@ public class BasicResource<T, D extends DAO<T>> extends GenericResource {
 	throws APIException {
 		try {
 			DAOManager.getDAO(getRequestContext().getConnection(), daoClass).delete(object);
-		} catch (DAOInstantiationException | SQLExecutionException | DAOCrudException | NullUniqueIndexException ex) {
+		} catch (DAOInstantiationException | DAOCrudException ex) {
 			throw new ProgramException(ex);
 		}
 	}
@@ -127,6 +125,7 @@ public class BasicResource<T, D extends DAO<T>> extends GenericResource {
 	
 	protected Integer getUserIDWithParam()
 	throws UserNotFoundException {
+		// TODO revoir les exceptions !!!!
 		if (userId != null) {
 			Integer userID = null;
 			if (userId.equals("current")) {
@@ -139,7 +138,7 @@ public class BasicResource<T, D extends DAO<T>> extends GenericResource {
 				try {
 					userID = Integer.parseInt(userId);
 				} catch (NumberFormatException ex) {
-					throw new UserNotFoundException();
+					throw new UserNotFoundException(ex);
 				}
 			}
 			return userID;
