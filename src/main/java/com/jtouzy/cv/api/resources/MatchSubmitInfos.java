@@ -12,6 +12,7 @@ public class MatchSubmitInfos {
 	private List<SeasonTeamPlayer> secondTeamPlayers;
 	private List<MatchPlayer> firstTeamMatchPlayers;
 	private List<MatchPlayer> secondTeamMatchPlayers;
+	private List<Integer> userTeams;
 
 	public Match getMatch() {
 		return match;
@@ -42,5 +43,11 @@ public class MatchSubmitInfos {
 	}
 	public void setSecondTeamMatchPlayers(List<MatchPlayer> secondTeamMatchPlayers) {
 		this.secondTeamMatchPlayers = secondTeamMatchPlayers;
+	}
+	public List<Integer> getUserTeams() {
+		return userTeams;
+	}
+	public void setUserTeams(List<Integer> userTeams) {
+		this.userTeams = userTeams;
 	}
 }
