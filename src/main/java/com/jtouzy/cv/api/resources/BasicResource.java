@@ -102,6 +102,11 @@ public class BasicResource<T, D extends DAO<T>> extends GenericResource {
 		return query;
 	}
 	
+	protected D getDAO()
+	throws DAOInstantiationException {
+		return getDAO(this.daoClass);
+	}
+	
 	protected Integer getSeasonIDWithParam()
 	throws SeasonNotFoundException, DAOInstantiationException, QueryException {
 		if (seasonId != null) {
