@@ -28,6 +28,7 @@ import com.jtouzy.dao.errors.QueryException;
 import com.jtouzy.dao.errors.model.ColumnContextNotFoundException;
 import com.jtouzy.dao.errors.model.FieldContextNotFoundException;
 import com.jtouzy.dao.errors.model.TableContextNotFoundException;
+import com.jtouzy.dao.errors.validation.DataValidationException;
 import com.jtouzy.dao.query.Query;
 import com.jtouzy.dao.query.QueryCollection;
 
@@ -58,7 +59,7 @@ public class BasicResource<T, D extends DAO<T>> extends GenericResource {
 	@POST
 	@RolesAllowed(Roles.ADMIN)
 	public T create(@NotNull T object)
-	throws APIException {
+	throws APIException, DataValidationException {
 		try {
 			return DAOManager.getDAO(getRequestContext().getConnection(), daoClass).create(object);
 		} catch (DAOInstantiationException | DAOCrudException ex) {
@@ -69,7 +70,7 @@ public class BasicResource<T, D extends DAO<T>> extends GenericResource {
 	@PUT
 	@RolesAllowed(Roles.ADMIN)
 	public T update(@NotNull T object)
-	throws APIException {
+	throws APIException, DataValidationException {
 		try {
 			return DAOManager.getDAO(getRequestContext().getConnection(), daoClass).update(object);
 		} catch (DAOInstantiationException | DAOCrudException ex) {
@@ -80,7 +81,7 @@ public class BasicResource<T, D extends DAO<T>> extends GenericResource {
 	@DELETE
 	@RolesAllowed(Roles.ADMIN)
 	public void delete(@NotNull T object)
-	throws APIException {
+	throws APIException, DataValidationException {
 		try {
 			DAOManager.getDAO(getRequestContext().getConnection(), daoClass).delete(object);
 		} catch (DAOInstantiationException | DAOCrudException ex) {
