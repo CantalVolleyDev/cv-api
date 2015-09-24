@@ -20,9 +20,11 @@ import com.jtouzy.cv.api.security.Roles;
 import com.jtouzy.cv.model.classes.Match;
 import com.jtouzy.cv.model.classes.MatchPlayer;
 import com.jtouzy.cv.model.classes.SeasonTeamPlayer;
+import com.jtouzy.cv.model.classes.Team;
 import com.jtouzy.cv.model.dao.MatchDAO;
 import com.jtouzy.cv.model.dao.MatchPlayerDAO;
 import com.jtouzy.cv.model.dao.SeasonTeamPlayerDAO;
+import com.jtouzy.cv.model.dao.TeamDAO;
 import com.jtouzy.cv.model.errors.UserNotFoundException;
 import com.jtouzy.dao.errors.DAOCrudException;
 import com.jtouzy.dao.errors.DAOInstantiationException;
@@ -62,7 +64,13 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 					                                           .collect(Collectors.toList());
 			if (connectedPlayer.size() == 0) {
 				throw new NotAuthorizedException("Impossible de visualiser les données de ce match : Vous ne faites parti d'aucune des deux équipes", "");
-			}			
+			}	
+			// On contrôle que l'équipe qui a soumis le score ne peut pas revenir le soumettre
+			if (match.getState() == Match.State.S || match.getState() == Match.State.R) {
+				if (connectedPlayer.size() == 1 && match.getScoreSettingTeam().getIdentifier() == connectedPlayer.get(0).getTeam().getIdentifier()) {
+					throw new NotAuthorizedException("Le score du match a déjà été soumis par l'équipe " + connectedPlayer.get(0).getTeam().getLabel(), "");
+				}
+			}
 			// Recherche des joueurs déjà saisis pour le match
 			List<MatchPlayer> matchPlayers = getDAO(MatchPlayerDAO.class).getPlayers(matchId);
 			// Création des informations du match
@@ -109,9 +117,18 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 				throw new NotAuthorizedException("Le match " + matchId + " est déjà validé", "");
 			}
 			// Match soumis par la requête
-			Match submitted = submit.getMatch();
+			Match submitted = submit.getMatch();			
+			// Contrôle de l'état du match
+			if (submitted.getState() == Match.State.S || submitted.getState() == Match.State.R) {
+				// L'utilisateur connecté fait parti des deux équipes : Validation directe
+				if (submit.getUserTeams().size() > 1) {
+					submitted.setState(Match.State.V);
+				} else {
+					Team submitter = getDAO(TeamDAO.class).queryForOne(submit.getUserTeams().get(0));
+					submitted.setScoreSettingTeam(submitter);
+				}
+			}
 			getDAO().update(submitted);
-			// FIXME: DAOCRUD progamexception, DATAVALIDATIONA LEVER NATUREL
 		} catch (DAOInstantiationException | QueryException | DAOCrudException ex) {
 			throw new ProgramException(ex);
 		}
