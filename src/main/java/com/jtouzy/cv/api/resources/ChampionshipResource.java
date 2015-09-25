@@ -20,6 +20,7 @@ import com.jtouzy.cv.model.errors.CalendarGenerationException;
 import com.jtouzy.cv.model.errors.RankingsCalculateException;
 import com.jtouzy.cv.model.utils.ChampionshipCalendarGenerator;
 import com.jtouzy.dao.errors.DAOInstantiationException;
+import com.jtouzy.dao.errors.validation.DataValidationException;
 
 @Path("/championships")
 public class ChampionshipResource extends BasicResource<Championship, ChampionshipDAO> {
@@ -30,7 +31,7 @@ public class ChampionshipResource extends BasicResource<Championship, Championsh
 	@POST
 	@Path("/{id}/calculateRankings")
 	public void calculateRankings(@PathParam("id") Integer championshipId)
-	throws RankingsCalculateException {
+	throws RankingsCalculateException, DataValidationException {
 		try {
 			ChampionshipDAO dao = getDAO(ChampionshipDAO.class);
 			dao.calculateRankings(championshipId);
