@@ -1,5 +1,9 @@
 package com.jtouzy.cv.api.resources;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,14 +21,15 @@ import javax.ws.rs.core.Response;
 import com.jtouzy.cv.api.errors.APIException;
 import com.jtouzy.cv.api.errors.ProgramException;
 import com.jtouzy.cv.api.security.Roles;
+import com.jtouzy.cv.model.classes.Comment;
 import com.jtouzy.cv.model.classes.Match;
 import com.jtouzy.cv.model.classes.MatchPlayer;
 import com.jtouzy.cv.model.classes.SeasonTeamPlayer;
 import com.jtouzy.cv.model.classes.Team;
+import com.jtouzy.cv.model.dao.CommentDAO;
 import com.jtouzy.cv.model.dao.MatchDAO;
 import com.jtouzy.cv.model.dao.MatchPlayerDAO;
 import com.jtouzy.cv.model.dao.SeasonTeamPlayerDAO;
-import com.jtouzy.cv.model.dao.TeamDAO;
 import com.jtouzy.cv.model.errors.UserNotFoundException;
 import com.jtouzy.dao.errors.DAOCrudException;
 import com.jtouzy.dao.errors.DAOInstantiationException;
@@ -65,10 +70,18 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 			if (connectedPlayer.size() == 0) {
 				throw new NotAuthorizedException("Impossible de visualiser les données de ce match : Vous ne faites parti d'aucune des deux équipes", "");
 			}	
+			Comment submitterComment = null;
 			// On contrôle que l'équipe qui a soumis le score ne peut pas revenir le soumettre
-			if (match.getState() == Match.State.S || match.getState() == Match.State.R) {
-				if (connectedPlayer.size() == 1 && match.getScoreSettingTeam().getIdentifier() == connectedPlayer.get(0).getTeam().getIdentifier()) {
-					throw new NotAuthorizedException("Le score du match a déjà été soumis par l'équipe " + connectedPlayer.get(0).getTeam().getLabel(), "");
+			if ((match.getState() == Match.State.S || match.getState() == Match.State.R) && connectedPlayer.size() == 1) {
+				Integer connectedPlayerTeam = connectedPlayer.get(0).getTeam().getIdentifier();
+				if (match.getScoreSettingTeam().getIdentifier() == connectedPlayerTeam) {
+					String teamLabel = match.getFirstTeam().getLabel();
+					if (match.getSecondTeam().getIdentifier() == match.getScoreSettingTeam().getIdentifier())
+						teamLabel = match.getSecondTeam().getLabel();
+					throw new NotAuthorizedException("Le score du match a déjà été soumis par l'équipe " + teamLabel, "");
+				}
+				if (match.getState() == Match.State.R) {
+					submitterComment = getDAO(CommentDAO.class).getMatchTeamComment(matchId, connectedPlayerTeam);
 				}
 			}
 			// Recherche des joueurs déjà saisis pour le match
@@ -93,6 +106,8 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 			infos.setUserTeams(connectedPlayer.stream()
 					                          .map(p -> p.getTeam().getIdentifier())
 					                          .collect(Collectors.toList()));
+			// Recherche du commentaire uniquement si on est sur un refus
+			infos.setSubmitterComment(submitterComment);
 			return infos;
 		} catch (DAOInstantiationException | QueryException ex) {
 			throw new ProgramException(ex);
@@ -104,6 +119,7 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 	@RolesAllowed(Roles.CONNECTED)
 	public void submit(@PathParam("id") Integer matchId, MatchSubmitInfos submit)
 	throws ProgramException, DataValidationException {
+		Connection connection = getRequestContext().getConnection();
 		try {
 			if (submit == null) {
 				throw new BadRequestException("Paramètre pour les informations du match absent");
@@ -114,23 +130,87 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 				throw new NotFoundException("Match " + matchId + " non trouvé");
 			}
 			if (match.getState() == Match.State.V) {
-				throw new NotAuthorizedException("Le match " + matchId + " est déjà validé", "");
+				throw new DataValidationException("Le match " + matchId + " est déjà validé");
 			}
 			// Match soumis par la requête
-			Match submitted = submit.getMatch();			
+			Match submitted = submit.getMatch();
+			Integer submitterTeamId = submit.getUserTeams().get(0);
+			Team submitter = new Team();
+			submitter.setIdentifier(submitterTeamId);
 			// Contrôle de l'état du match
 			if (submitted.getState() == Match.State.S || submitted.getState() == Match.State.R) {
 				// L'utilisateur connecté fait parti des deux équipes : Validation directe
 				if (submit.getUserTeams().size() > 1) {
 					submitted.setState(Match.State.V);
 				} else {
-					Team submitter = getDAO(TeamDAO.class).queryForOne(submit.getUserTeams().get(0));
 					submitted.setScoreSettingTeam(submitter);
 				}
 			}
+			// Contrôle pour les joueurs
+			List<MatchPlayer> validatePlayers = new ArrayList<MatchPlayer>();
+			boolean validateSubmitter = false, deleteSubmitter = (match.getState() == Match.State.R);
+			if (submitted.getState() == Match.State.S || submitted.getState() == Match.State.R) {
+				validateSubmitter = true;
+			} else if (submitted.getState() == Match.State.V) {
+				if (submit.getUserTeams().size() > 1) {
+					validatePlayers.addAll(submit.getFirstTeamMatchPlayers());
+					validatePlayers.addAll(submit.getSecondTeamMatchPlayers());
+				} else {
+					validateSubmitter = true;
+				}
+			}
+			if (validateSubmitter) {
+				if (submitterTeamId == submitted.getFirstTeam().getIdentifier()) {
+					validatePlayers.addAll(submit.getFirstTeamMatchPlayers());
+				} else {
+					validatePlayers.addAll(submit.getSecondTeamMatchPlayers());
+				}
+				if (validatePlayers.size() < 3) {
+					throw new DataValidationException("Au moins trois joueurs doivent être renseignés");
+				}
+				//TODO Contrôle par rapport à l'engagement en 3 ou 4
+			}
+			Comment submitterComment = submit.getSubmitterComment();
+			if (submitterComment != null) {
+				submitterComment.setEntity(Comment.Entity.MAT);
+				submitterComment.setEntityValue(matchId);
+				submitterComment.setTeam(submitter);
+				submitterComment.setUser(getRequestContext().getUserPrincipal().getUser());
+				submitterComment.setDate(LocalDateTime.now());
+				
+			}
+			// Gestion des actions en base en transactionnel
+			// -> Validation du match
+			// -> Insertion des joueurs pour le match
+			// -> Insertion du commentaire de match
+			// -> Mise à jour du classement
+			getRequestContext().getConnection().setAutoCommit(false);
 			getDAO().update(submitted);
-		} catch (DAOInstantiationException | QueryException | DAOCrudException ex) {
+			MatchPlayerDAO matchPlayerDao = getDAO(MatchPlayerDAO.class);
+			CommentDAO commentDao = getDAO(CommentDAO.class);
+			if (deleteSubmitter) {
+				matchPlayerDao.delete(matchId, submitterTeamId);
+				commentDao.deleteMatchComments(matchId, submitterTeamId);
+			}
+			if (validateSubmitter) {
+				matchPlayerDao.create(validatePlayers);
+			}
+			if (submitterComment != null) {
+				commentDao.create(submitterComment);
+			}
+			getRequestContext().getConnection().commit();
+			getRequestContext().getConnection().setAutoCommit(true);
+		} catch (DAOInstantiationException | QueryException | DAOCrudException | SQLException ex) {
 			throw new ProgramException(ex);
+		} finally {
+			try {
+				if (!connection.getAutoCommit()) {
+					connection.rollback();
+					connection.setAutoCommit(true);
+				}
+			} catch (SQLException ex) {
+				throw new ProgramException(ex);
+			}
 		}
 	}
 	

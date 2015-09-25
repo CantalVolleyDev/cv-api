@@ -2,6 +2,7 @@ package com.jtouzy.cv.api.resources;
 
 import java.util.List;
 
+import com.jtouzy.cv.model.classes.Comment;
 import com.jtouzy.cv.model.classes.Match;
 import com.jtouzy.cv.model.classes.MatchPlayer;
 import com.jtouzy.cv.model.classes.SeasonTeamPlayer;
@@ -13,6 +14,7 @@ public class MatchSubmitInfos {
 	private List<MatchPlayer> firstTeamMatchPlayers;
 	private List<MatchPlayer> secondTeamMatchPlayers;
 	private List<Integer> userTeams;
+	private Comment submitterComment;
 
 	public Match getMatch() {
 		return match;
@@ -49,5 +51,11 @@ public class MatchSubmitInfos {
 	}
 	public void setUserTeams(List<Integer> userTeams) {
 		this.userTeams = userTeams;
+	}
+	public Comment getSubmitterComment() {
+		return submitterComment;
+	}
+	public void setSubmitterComment(Comment submitterComment) {
+		this.submitterComment = submitterComment;
 	}
 }
