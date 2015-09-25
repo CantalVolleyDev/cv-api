@@ -6,7 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -20,6 +22,7 @@ import com.jtouzy.cv.model.errors.CalendarGenerationException;
 import com.jtouzy.cv.model.errors.RankingsCalculateException;
 import com.jtouzy.cv.model.utils.ChampionshipCalendarGenerator;
 import com.jtouzy.dao.errors.DAOInstantiationException;
+import com.jtouzy.dao.errors.QueryException;
 import com.jtouzy.dao.errors.validation.DataValidationException;
 
 @Path("/championships")
@@ -76,5 +79,21 @@ public class ChampionshipResource extends BasicResource<Championship, Championsh
 		}
 		text.append("</body></html>");
 		return text.toString();
+	}
+	
+	@GET
+	@Path("/{id}/rankings")
+	public Championship getChampionship(@PathParam("id") Integer championshipId)
+	throws QueryException {
+		if (championshipId == null)
+			throw new BadRequestException("L'identifiant du championnat doit être renseigné");
+		try {
+			Championship championship = getDAO(ChampionshipDAO.class).getChampionshipTeamsAndMatchs(championshipId);
+			if (championship == null)
+				throw new NotFoundException("Le championnat " + championshipId + " n'existe pas");
+			return championship;
+		} catch (DAOInstantiationException ex) {
+			throw new QueryException(ex);
+		}
 	}
 }
