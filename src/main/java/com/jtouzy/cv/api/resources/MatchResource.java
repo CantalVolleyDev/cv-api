@@ -26,10 +26,12 @@ import com.jtouzy.cv.model.classes.Match;
 import com.jtouzy.cv.model.classes.MatchPlayer;
 import com.jtouzy.cv.model.classes.SeasonTeamPlayer;
 import com.jtouzy.cv.model.classes.Team;
+import com.jtouzy.cv.model.dao.ChampionshipDAO;
 import com.jtouzy.cv.model.dao.CommentDAO;
 import com.jtouzy.cv.model.dao.MatchDAO;
 import com.jtouzy.cv.model.dao.MatchPlayerDAO;
 import com.jtouzy.cv.model.dao.SeasonTeamPlayerDAO;
+import com.jtouzy.cv.model.errors.RankingsCalculateException;
 import com.jtouzy.cv.model.errors.UserNotFoundException;
 import com.jtouzy.dao.errors.DAOCrudException;
 import com.jtouzy.dao.errors.DAOInstantiationException;
@@ -198,9 +200,10 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 			if (submitterComment != null) {
 				commentDao.create(submitterComment);
 			}
+			getDAO(ChampionshipDAO.class).updateRankings(submitted);
 			getRequestContext().getConnection().commit();
 			getRequestContext().getConnection().setAutoCommit(true);
-		} catch (DAOInstantiationException | QueryException | DAOCrudException | SQLException ex) {
+		} catch (DAOInstantiationException | QueryException | DAOCrudException | SQLException | RankingsCalculateException ex) {
 			throw new ProgramException(ex);
 		} finally {
 			try {
