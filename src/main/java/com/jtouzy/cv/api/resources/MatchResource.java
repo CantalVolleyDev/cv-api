@@ -20,6 +20,7 @@ import javax.ws.rs.core.Response;
 
 import com.jtouzy.cv.api.errors.APIException;
 import com.jtouzy.cv.api.errors.ProgramException;
+import com.jtouzy.cv.api.security.Client;
 import com.jtouzy.cv.api.security.Roles;
 import com.jtouzy.cv.model.classes.Comment;
 import com.jtouzy.cv.model.classes.Match;
@@ -30,6 +31,7 @@ import com.jtouzy.cv.model.dao.ChampionshipDAO;
 import com.jtouzy.cv.model.dao.CommentDAO;
 import com.jtouzy.cv.model.dao.MatchDAO;
 import com.jtouzy.cv.model.dao.MatchPlayerDAO;
+import com.jtouzy.cv.model.dao.SeasonTeamDAO;
 import com.jtouzy.cv.model.dao.SeasonTeamPlayerDAO;
 import com.jtouzy.cv.model.errors.RankingsCalculateException;
 import com.jtouzy.cv.model.errors.UserNotFoundException;
@@ -45,16 +47,43 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 	}
 
 	@GET
+	@Path("/{id}/details")
+	public MatchDetails getMatchDetails(@PathParam("id") Integer matchId)
+	throws ProgramException, NotFoundException {
+		try {
+			Match match = controlMatchDetails(matchId);
+			MatchDetails details = new MatchDetails();
+			details.setMatch(match);
+			details.setGym(getDAO(SeasonTeamDAO.class).getSeasonTeam(
+					match.getChampionship().getCompetition().getSeason().getIdentifier(), 
+					match.getFirstTeam().getIdentifier()).getGym());
+			addMatchPlayers(details, match);
+			details.setComments(getMatchComments(matchId));
+			return details;
+		} catch (DAOInstantiationException | QueryException ex) {
+			throw new ProgramException(ex);
+		}
+	}
+	
+	@GET
+	@Path("/{id}/comments")
+	public List<Comment> getMatchComments(@PathParam("id") Integer matchId)
+	throws ProgramException {
+		try {
+			return getDAO(CommentDAO.class).getMatchComments(matchId);
+		} catch (DAOInstantiationException | QueryException ex) {
+			throw new ProgramException(ex);
+		}
+	}
+	
+	@GET
 	@Path("/{id}/submitInfos")
 	@RolesAllowed(Roles.CONNECTED)
 	public MatchSubmitInfos getMatchSubmitInfos(@PathParam("id") Integer matchId)
 	throws ProgramException, NotAuthorizedException, NotFoundException {
 		try {
 			// Lecture du match avec détails (Exception si le match n'existe pas)
-			Match match = getDAO().queryOneWithDetails(matchId);
-			if (match == null) {
-				throw new NotFoundException("Match " + matchId + " non trouvé");
-			}
+			Match match = controlMatchDetails(matchId);
 			if (match.getState() == Match.State.V) {
 				throw new NotAuthorizedException("Match " + matchId + " déjà validé", "");
 			}
@@ -86,23 +115,17 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 					submitterComment = getDAO(CommentDAO.class).getMatchTeamComment(matchId, connectedPlayerTeam);
 				}
 			}
-			// Recherche des joueurs déjà saisis pour le match
-			List<MatchPlayer> matchPlayers = getDAO(MatchPlayerDAO.class).getPlayers(matchId);
+
 			// Création des informations du match
 			MatchSubmitInfos infos = new MatchSubmitInfos();
 			infos.setMatch(match);
+			addMatchPlayers(infos, match);
 			infos.setFirstTeamPlayers(allPlayers.stream()
 					                            .filter(s -> s.getTeam().getIdentifier() == match.getFirstTeam().getIdentifier())
 					                            .collect(Collectors.toList()));
 			infos.setSecondTeamPlayers(allPlayers.stream()
 					                             .filter(s -> s.getTeam().getIdentifier() == match.getSecondTeam().getIdentifier())
 					                             .collect(Collectors.toList()));
-			infos.setFirstTeamMatchPlayers(matchPlayers.stream()
-					                                   .filter(p -> p.getTeam().getIdentifier() == match.getFirstTeam().getIdentifier())
-					                                   .collect(Collectors.toList()));
-			infos.setSecondTeamMatchPlayers(matchPlayers.stream()
-                                                        .filter(p -> p.getTeam().getIdentifier() == match.getSecondTeam().getIdentifier())
-                                                        .collect(Collectors.toList()));
 			// Affectation des équipes du joueur (la plupart du temps une seule, sauf dans le cas
 			// ou le joueur fait parti des 2 équipes du match
 			infos.setUserTeams(connectedPlayer.stream()
@@ -111,6 +134,31 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 			// Recherche du commentaire uniquement si on est sur un refus
 			infos.setSubmitterComment(submitterComment);
 			return infos;
+		} catch (DAOInstantiationException | QueryException ex) {
+			throw new ProgramException(ex);
+		}
+	}
+	
+	private void addMatchPlayers(MatchInfos infos, Match match)
+	throws DAOInstantiationException, QueryException {
+		// Recherche des joueurs déjà saisis pour le match
+		List<MatchPlayer> matchPlayers = getDAO(MatchPlayerDAO.class).getPlayers(match.getIdentifier());
+		infos.setFirstTeamMatchPlayers(matchPlayers.stream()
+                						           .filter(p -> p.getTeam().getIdentifier() == match.getFirstTeam().getIdentifier())
+                						           .collect(Collectors.toList()));
+		infos.setSecondTeamMatchPlayers(matchPlayers.stream()
+                 									.filter(p -> p.getTeam().getIdentifier() == match.getSecondTeam().getIdentifier())
+                 									.collect(Collectors.toList()));
+	}
+	
+	private Match controlMatchDetails(Integer matchId)
+	throws ProgramException, NotFoundException {
+		try {
+			Match match = getDAO().queryOneWithDetails(matchId);
+			if (match == null) {
+				throw new NotFoundException("Match " + matchId + " non trouvé");
+			}
+			return match;
 		} catch (DAOInstantiationException | QueryException ex) {
 			throw new ProgramException(ex);
 		}
@@ -214,6 +262,37 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 			} catch (SQLException ex) {
 				throw new ProgramException(ex);
 			}
+		}
+	}
+	
+	@POST
+	@Path("/{id}/comment")
+	public void addComment(@PathParam("id") Integer matchId, Comment newComment)
+	throws ProgramException, NotFoundException, DataValidationException, BadRequestException {
+		try {
+			// Gestion manuelle du message d'erreur pour personnalisation
+			// Si on laisse la gestion du RolesAllowed, message "impossible d'accéder à cette page"
+			Client client = getRequestContext().getUserPrincipal();
+			if (client == null) {
+				throw new NotAuthorizedException("Vous devez être connecté pour enregistrer un commentaire", "");
+			}
+			Match match = getDAO().queryForOne(matchId);
+			if (match == null) {
+				throw new NotFoundException("Match " + matchId + " non trouvé");
+			}
+			if (newComment == null) {
+				throw new BadRequestException("Paramètre pour les informations du commentaire absent");
+			}
+			if (newComment.getContent().isEmpty()) {
+				throw new BadRequestException("Le commentaire ne peut pas être vide");
+			}
+			newComment.setEntity(Comment.Entity.MAT);
+			newComment.setEntityValue(matchId);
+			newComment.setDate(LocalDateTime.now());
+			newComment.setUser(getRequestContext().getUserPrincipal().getUser());
+			getDAO(CommentDAO.class).create(newComment);
+		} catch (QueryException | DAOInstantiationException | DAOCrudException ex) {
+			throw new ProgramException(ex);
 		}
 	}
 	
