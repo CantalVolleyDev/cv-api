@@ -16,23 +16,27 @@ import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.Response;
 
 import com.jtouzy.cv.api.errors.APIException;
 import com.jtouzy.cv.api.errors.ProgramException;
 import com.jtouzy.cv.api.security.Client;
 import com.jtouzy.cv.api.security.Roles;
+import com.jtouzy.cv.api.security.TokenHelper;
 import com.jtouzy.cv.model.classes.Comment;
 import com.jtouzy.cv.model.classes.Match;
 import com.jtouzy.cv.model.classes.MatchPlayer;
 import com.jtouzy.cv.model.classes.SeasonTeamPlayer;
 import com.jtouzy.cv.model.classes.Team;
+import com.jtouzy.cv.model.classes.User;
 import com.jtouzy.cv.model.dao.ChampionshipDAO;
 import com.jtouzy.cv.model.dao.CommentDAO;
 import com.jtouzy.cv.model.dao.MatchDAO;
 import com.jtouzy.cv.model.dao.MatchPlayerDAO;
 import com.jtouzy.cv.model.dao.SeasonTeamDAO;
 import com.jtouzy.cv.model.dao.SeasonTeamPlayerDAO;
+import com.jtouzy.cv.model.dao.UserDAO;
 import com.jtouzy.cv.model.errors.RankingsCalculateException;
 import com.jtouzy.cv.model.errors.UserNotFoundException;
 import com.jtouzy.dao.errors.DAOCrudException;
@@ -95,8 +99,9 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 							Arrays.asList(match.getFirstTeam().getIdentifier(), 
 									      match.getSecondTeam().getIdentifier()));
 			// On contrôle que l'un des joueurs d'une des deux équipes soit le joueur connecté
+			final Integer connectedId = getCurrentSubmitUser().getIdentifier();
 			List<SeasonTeamPlayer> connectedPlayer = allPlayers.stream()
-					                                           .filter(s -> s.getPlayer().getIdentifier() == getRequestContext().getUserPrincipal().getUser().getIdentifier())
+					                                           .filter(s -> s.getPlayer().getIdentifier() == connectedId)
 					                                           .collect(Collectors.toList());
 			if (connectedPlayer.size() == 0) {
 				throw new NotAuthorizedException("Impossible de visualiser les données de ce match : Vous ne faites parti d'aucune des deux équipes", "");
@@ -167,7 +172,7 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 	@POST
 	@Path("/{id}/submit")
 	@RolesAllowed(Roles.CONNECTED)
-	public void submit(@PathParam("id") Integer matchId, MatchSubmitInfos submit)
+	public Response submit(@PathParam("id") Integer matchId, MatchSubmitInfos submit)
 	throws ProgramException, DataValidationException {
 		Connection connection = getRequestContext().getConnection();
 		try {
@@ -225,9 +230,8 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 				submitterComment.setEntity(Comment.Entity.MAT);
 				submitterComment.setEntityValue(matchId);
 				submitterComment.setTeam(submitter);
-				submitterComment.setUser(getRequestContext().getUserPrincipal().getUser());
+				submitterComment.setUser(getCurrentSubmitUser());
 				submitterComment.setDate(LocalDateTime.now());
-				
 			}
 			// Gestion des actions en base en transactionnel
 			// -> Validation du match
@@ -251,6 +255,9 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 			getDAO(ChampionshipDAO.class).updateRankings(submitted);
 			getRequestContext().getConnection().commit();
 			getRequestContext().getConnection().setAutoCommit(true);
+			return Response.status(Response.Status.OK)
+						   .cookie(Client.createAuthValidationCookie())
+					       .build();
 		} catch (DAOInstantiationException | QueryException | DAOCrudException | SQLException | RankingsCalculateException ex) {
 			throw new ProgramException(ex);
 		} finally {
@@ -262,6 +269,29 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 			} catch (SQLException ex) {
 				throw new ProgramException(ex);
 			}
+		}
+	}
+	
+	private User getCurrentSubmitUser()
+	throws NotAuthorizedException, QueryException {
+		try {
+			User user = getRequestContext().getUserPrincipal().getUser();
+			// On regarde s'il y a un cookie d'authentification de validation directe
+			Cookie tokenForScoreValidation = requestContext.getCookies().get(Client.AUTHENTIFICATION_VALIDATION_COOKIE_NAME);
+			if (tokenForScoreValidation != null) {
+				String tokenValue = tokenForScoreValidation.getValue();
+				if (tokenValue != null) {
+					tokenValue = TokenHelper.getUserID(tokenValue);
+					try {
+						user = getDAO(UserDAO.class).findByMail(tokenValue);
+					} catch (UserNotFoundException ex) {
+						throw new NotAuthorizedException("Problème dans l'authentification", "");
+					}
+				}
+			}
+			return user;
+		} catch (DAOInstantiationException ex) {
+			throw new QueryException(ex);
 		}
 	}
 	

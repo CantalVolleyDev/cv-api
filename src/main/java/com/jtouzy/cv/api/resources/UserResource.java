@@ -1,10 +1,13 @@
 package com.jtouzy.cv.api.resources;
 
+import java.util.List;
+import java.util.Optional;
+
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.GET;
+import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
@@ -18,11 +21,10 @@ import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.jtouzy.cv.api.errors.APIException;
-import com.jtouzy.cv.api.errors.LoginException;
 import com.jtouzy.cv.api.images.ImageFinder;
 import com.jtouzy.cv.api.security.Client;
 import com.jtouzy.cv.api.security.Roles;
-import com.jtouzy.cv.api.security.TokenHelper;
+import com.jtouzy.cv.model.classes.Match;
 import com.jtouzy.cv.model.classes.SeasonTeamPlayer;
 import com.jtouzy.cv.model.classes.Team;
 import com.jtouzy.cv.model.classes.User;
@@ -43,24 +45,54 @@ public class UserResource extends GenericResource {
 	@POST
 	@Path("/login")
 	public Response login(UserLoginParameters logParameters)
-	throws LoginException {
+	throws NotAuthorizedException {
+		User user = commonLogin(logParameters);
+		return Response.status(Response.Status.OK)
+			           .cookie(Client.createAuthCookie(user))
+			           .entity(user)
+			           .build();
+	}
+	
+	@POST
+	@Path("/loginForValidation")
+	public Response loginForValidation(MatchTeamLoginParameters logParameters)
+	throws NotAuthorizedException {
+		try {
+			User user = commonLogin(logParameters);
+			Match match = getDAO(MatchDAO.class).queryOneWithDetails(logParameters.getMatchId());
+			if (match == null) {
+				throw new NotAuthorizedException("Le match " + logParameters.getMatchId() + " n'existe pas", "");
+			}
+			List<SeasonTeamPlayer> players = getDAO(SeasonTeamPlayerDAO.class).getPlayers(match.getChampionship().getCompetition().getSeason().getIdentifier(), logParameters.getTeamId());
+			Optional<SeasonTeamPlayer> opt = players.stream().filter(stp -> stp.getPlayer().getIdentifier() == user.getIdentifier()).findFirst();
+			if (!opt.isPresent()) {
+				throw new NotAuthorizedException("Le joueur ne fait pas parti de l'équipe adverse", "");
+			}
+			return Response.status(Response.Status.OK)
+					       .cookie(Client.createAuthValidationCookie(user))
+					       .entity(user)
+					       .build();
+		} catch (DAOInstantiationException | QueryException ex) {
+			throw new NotAuthorizedException(ex, "");
+		}
+	}
+	
+	private User commonLogin(UserLoginParameters logParameters)
+	throws NotAuthorizedException {
 		try {
 			logger.trace("Tentative de connexion d'un utilisateur");
 			checkLoginParamsNotNull(logParameters);
 			UserDAO dao = getDAO(UserDAO.class);
 			User user = dao.queryUnique(ImmutableMap.of(User.MAIL_FIELD, logParameters.mail));
 			if (user == null) {
-				throw new LoginException("Identifiant ou mot de passe incorrect");
+				throw new NotAuthorizedException("Identifiant ou mot de passe incorrect", "");
 			}
 			logger.trace("Mail retrouvé : Vérification du mot de passe");
 			checkPassword(user, logParameters.password);
 			logger.trace("Mot de passe valide : Connexion réussie");
-			return Response.status(Response.Status.OK)
-					       .cookie(createAuthCookie(user))
-					       .entity(user)
-					       .build();
+			return user;
 		} catch (DAOInstantiationException | QueryException ex) {
-			throw new LoginException(ex);
+			throw new NotAuthorizedException(ex, "");
 		}
 	}
 	
@@ -80,7 +112,7 @@ public class UserResource extends GenericResource {
 	@RolesAllowed(Roles.CONNECTED)
 	public Response logout() {
 		return Response.status(Response.Status.OK)
-				       .cookie(createAuthCookie())
+				       .cookie(Client.createAuthCookie())
 				       .build();
 	}
 	
@@ -106,15 +138,15 @@ public class UserResource extends GenericResource {
 	}
 	
 	private void checkLoginParamsNotNull(UserLoginParameters logParameters)
-	throws LoginException {
+	throws NotAuthorizedException {
 		if (logParameters == null || 
 			Strings.isNullOrEmpty(logParameters.mail) ||
 			Strings.isNullOrEmpty(logParameters.password))
-			throw new LoginException("Informations incomplètes pour traiter la connexion");
+			throw new NotAuthorizedException("Informations incomplètes pour traiter la connexion", "");
 	}
 	
 	private void checkPassword(User user, String password)
-	throws LoginException {
+	throws NotAuthorizedException {
 		String salt = user.getPassword().substring(0, 64);
 		String validHash = user.getPassword().substring(64);
 		HashFunction hashFunction = Hashing.sha256();
@@ -122,18 +154,7 @@ public class UserResource extends GenericResource {
 				                        .putString(password + salt, Charsets.UTF_8)
 				                        .hash();
 		if (!hashCode.toString().equals(validHash)) {
-			throw new LoginException("Identifiant ou mot de passe incorrect");
+			throw new NotAuthorizedException("Identifiant ou mot de passe incorrect", "");
 		}
-	}
-	
-	private NewCookie createAuthCookie() {
-		return createAuthCookie(null);
-	}
-	
-	private NewCookie createAuthCookie(User user) {
-		return new NewCookie(Client.AUTHENTIFICATION_COOKIE_NAME, 
-				             user == null ? "deleted" : TokenHelper.getUserToken(user), 
-				             "/", "", "", 
-				             user == null ? 0 : NewCookie.DEFAULT_MAX_AGE, false, true);
 	}
 }
