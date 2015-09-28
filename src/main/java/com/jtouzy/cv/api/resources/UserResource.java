@@ -16,7 +16,6 @@ import org.apache.logging.log4j.Logger;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
@@ -26,7 +25,6 @@ import com.jtouzy.cv.api.security.Client;
 import com.jtouzy.cv.api.security.Roles;
 import com.jtouzy.cv.model.classes.Match;
 import com.jtouzy.cv.model.classes.SeasonTeamPlayer;
-import com.jtouzy.cv.model.classes.Team;
 import com.jtouzy.cv.model.classes.User;
 import com.jtouzy.cv.model.dao.MatchDAO;
 import com.jtouzy.cv.model.dao.SeasonDAO;
@@ -34,9 +32,6 @@ import com.jtouzy.cv.model.dao.SeasonTeamPlayerDAO;
 import com.jtouzy.cv.model.dao.UserDAO;
 import com.jtouzy.dao.errors.DAOInstantiationException;
 import com.jtouzy.dao.errors.QueryException;
-import com.jtouzy.dao.errors.model.ColumnContextNotFoundException;
-import com.jtouzy.dao.errors.model.TableContextNotFoundException;
-import com.jtouzy.dao.query.Query;
 
 @Path("/user")
 public class UserResource extends GenericResource {
@@ -59,11 +54,11 @@ public class UserResource extends GenericResource {
 	throws NotAuthorizedException {
 		try {
 			User user = commonLogin(logParameters);
-			Match match = getDAO(MatchDAO.class).queryOneWithDetails(logParameters.getMatchId());
+			Match match = getDAO(MatchDAO.class).getOneWithDetails(logParameters.getMatchId());
 			if (match == null) {
 				throw new NotAuthorizedException("Le match " + logParameters.getMatchId() + " n'existe pas", "");
 			}
-			List<SeasonTeamPlayer> players = getDAO(SeasonTeamPlayerDAO.class).getPlayers(match.getChampionship().getCompetition().getSeason().getIdentifier(), logParameters.getTeamId());
+			List<SeasonTeamPlayer> players = getDAO(SeasonTeamPlayerDAO.class).getAllBySeasonAndTeam(match.getChampionship().getCompetition().getSeason().getIdentifier(), logParameters.getTeamId());
 			Optional<SeasonTeamPlayer> opt = players.stream().filter(stp -> stp.getPlayer().getIdentifier() == user.getIdentifier()).findFirst();
 			if (!opt.isPresent()) {
 				throw new NotAuthorizedException("Le joueur ne fait pas parti de l'équipe adverse", "");
@@ -82,8 +77,7 @@ public class UserResource extends GenericResource {
 		try {
 			logger.trace("Tentative de connexion d'un utilisateur");
 			checkLoginParamsNotNull(logParameters);
-			UserDAO dao = getDAO(UserDAO.class);
-			User user = dao.queryUnique(ImmutableMap.of(User.MAIL_FIELD, logParameters.mail));
+			User user = getDAO(UserDAO.class).getOneByMail(logParameters.mail);
 			if (user == null) {
 				throw new NotAuthorizedException("Identifiant ou mot de passe incorrect", "");
 			}
@@ -124,15 +118,11 @@ public class UserResource extends GenericResource {
 			AccountInfos infos = new AccountInfos();
 			Integer currentSeason = getDAO(SeasonDAO.class).getCurrentSeason().getIdentifier();
 			Integer currentUser = getRequestContext().getUserPrincipal().getUser().getIdentifier();
-			Query<SeasonTeamPlayer> queryTeam = getDAO(SeasonTeamPlayerDAO.class).query();
-			queryTeam.context().addDirectJoin(Team.class);
-			queryTeam.context().addEqualsCriterion(SeasonTeamPlayer.PLAYER_FIELD, currentUser);
-			queryTeam.context().addEqualsCriterion(SeasonTeamPlayer.SEASON_FIELD, currentSeason);
-			infos.setTeams(queryTeam.many());
-			infos.setMatchs(getDAO(MatchDAO.class).getMatchs(currentSeason, currentUser));
+			infos.setTeams(getDAO(SeasonTeamPlayerDAO.class).getAllBySeasonAndPlayer(currentSeason, currentUser));
+			infos.setMatchs(getDAO(MatchDAO.class).getAllBySeasonAndUser(currentSeason, currentUser));
 			infos.setUploadImage(ImageFinder.isUserImageExists(currentUser));
 			return infos;
-		} catch (DAOInstantiationException | TableContextNotFoundException | ColumnContextNotFoundException | QueryException ex) {
+		} catch (DAOInstantiationException | QueryException ex) {
 			throw new APIException(Response.Status.INTERNAL_SERVER_ERROR, ex);
 		}
 	}

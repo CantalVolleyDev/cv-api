@@ -38,7 +38,6 @@ import com.jtouzy.cv.model.dao.SeasonTeamDAO;
 import com.jtouzy.cv.model.dao.SeasonTeamPlayerDAO;
 import com.jtouzy.cv.model.dao.UserDAO;
 import com.jtouzy.cv.model.errors.RankingsCalculateException;
-import com.jtouzy.cv.model.errors.UserNotFoundException;
 import com.jtouzy.dao.errors.DAOCrudException;
 import com.jtouzy.dao.errors.DAOInstantiationException;
 import com.jtouzy.dao.errors.QueryException;
@@ -58,7 +57,7 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 			Match match = controlMatchDetails(matchId);
 			MatchDetails details = new MatchDetails();
 			details.setMatch(match);
-			details.setGym(getDAO(SeasonTeamDAO.class).getSeasonTeam(
+			details.setGym(getDAO(SeasonTeamDAO.class).getOneWithDetails(
 					match.getChampionship().getCompetition().getSeason().getIdentifier(), 
 					match.getFirstTeam().getIdentifier()).getGym());
 			addMatchPlayers(details, match);
@@ -74,7 +73,7 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 	public List<Comment> getMatchComments(@PathParam("id") Integer matchId)
 	throws ProgramException {
 		try {
-			return getDAO(CommentDAO.class).getMatchComments(matchId);
+			return getDAO(CommentDAO.class).getAllByMatch(matchId);
 		} catch (DAOInstantiationException | QueryException ex) {
 			throw new ProgramException(ex);
 		}
@@ -94,7 +93,7 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 			// Select unique pour récupérer tous les joueurs des 2 équipes
 			// On fait ensuite un tri pour diviser, à la place de faire 2 select
 			List<SeasonTeamPlayer> allPlayers = 
-					getDAO(SeasonTeamPlayerDAO.class).getPlayers(
+					getDAO(SeasonTeamPlayerDAO.class).getAllBySeasonAndTeamIn(
 							match.getChampionship().getCompetition().getSeason().getIdentifier(), 
 							Arrays.asList(match.getFirstTeam().getIdentifier(), 
 									      match.getSecondTeam().getIdentifier()));
@@ -117,7 +116,7 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 					throw new NotAuthorizedException("Le score du match a déjà été soumis par l'équipe " + teamLabel, "");
 				}
 				if (match.getState() == Match.State.R) {
-					submitterComment = getDAO(CommentDAO.class).getMatchTeamComment(matchId, connectedPlayerTeam);
+					submitterComment = getDAO(CommentDAO.class).getOneByMatchTeam(matchId, connectedPlayerTeam);
 				}
 			}
 
@@ -147,7 +146,7 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 	private void addMatchPlayers(MatchInfos infos, Match match)
 	throws DAOInstantiationException, QueryException {
 		// Recherche des joueurs déjà saisis pour le match
-		List<MatchPlayer> matchPlayers = getDAO(MatchPlayerDAO.class).getPlayers(match.getIdentifier());
+		List<MatchPlayer> matchPlayers = getDAO(MatchPlayerDAO.class).getAllByMatch(match.getIdentifier());
 		infos.setFirstTeamMatchPlayers(matchPlayers.stream()
                 						           .filter(p -> p.getTeam().getIdentifier() == match.getFirstTeam().getIdentifier())
                 						           .collect(Collectors.toList()));
@@ -159,7 +158,7 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 	private Match controlMatchDetails(Integer matchId)
 	throws ProgramException, NotFoundException {
 		try {
-			Match match = getDAO().queryOneWithDetails(matchId);
+			Match match = getDAO().getOneWithDetails(matchId);
 			if (match == null) {
 				throw new NotFoundException("Match " + matchId + " non trouvé");
 			}
@@ -180,7 +179,7 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 				throw new BadRequestException("Paramètre pour les informations du match absent");
 			}
 			// Lecture des informations du match pour vérifier la cohérence
-			Match match = getDAO().queryForOne(matchId);
+			Match match = getDAO().getOne(matchId);
 			if (match == null) {
 				throw new NotFoundException("Match " + matchId + " non trouvé");
 			}
@@ -283,8 +282,8 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 				if (tokenValue != null) {
 					tokenValue = TokenHelper.getUserID(tokenValue);
 					try {
-						user = getDAO(UserDAO.class).findByMail(tokenValue);
-					} catch (UserNotFoundException ex) {
+						user = getDAO(UserDAO.class).getOneByMail(tokenValue);
+					} catch (QueryException ex) {
 						throw new NotAuthorizedException("Problème dans l'authentification", "");
 					}
 				}
@@ -306,7 +305,7 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 			if (client == null) {
 				throw new NotAuthorizedException("Vous devez être connecté pour enregistrer un commentaire", "");
 			}
-			Match match = getDAO().queryForOne(matchId);
+			Match match = getDAO().getOne(matchId);
 			if (match == null) {
 				throw new NotFoundException("Match " + matchId + " non trouvé");
 			}
@@ -330,8 +329,8 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 	public List<Match> getAll() 
 	throws APIException {
 		try {
-			return getDAO(MatchDAO.class).getMatchs(getSeasonIDWithParam(), getUserIDWithParam());
-		} catch (DAOInstantiationException | QueryException | UserNotFoundException ex) {
+			return getDAO(MatchDAO.class).getAllBySeasonAndUser(getSeasonIDWithParam(), getUserIDWithParam());
+		} catch (DAOInstantiationException | QueryException ex) {
 			throw new APIException(Response.Status.INTERNAL_SERVER_ERROR, ex);
 		}
 	}

@@ -1,42 +1,42 @@
 package com.jtouzy.cv.api.resources;
 
+import java.util.List;
+
 import javax.annotation.security.PermitAll;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Response;
 
+import com.jtouzy.cv.api.errors.APIException;
 import com.jtouzy.cv.model.classes.News;
 import com.jtouzy.cv.model.dao.NewsDAO;
 import com.jtouzy.dao.errors.DAOInstantiationException;
 import com.jtouzy.dao.errors.QueryException;
-import com.jtouzy.dao.errors.model.ColumnContextNotFoundException;
-import com.jtouzy.dao.query.Query;
 
 @Path("/news")
 @PermitAll
 public class NewsResource extends BasicResource<News, NewsDAO> {
 	@QueryParam("published")
 	protected Boolean published;
+	@QueryParam("limitTo")
+	protected Integer limitTo;
+	@QueryParam("page")
+	protected Integer page;
 	
 	public NewsResource() {
 		super(News.class, NewsDAO.class);
 	}
 	
 	@Override
-	public Query<News> query()
-	throws DAOInstantiationException, QueryException {
+	public List<News> getAll() 
+	throws APIException {
 		try {
-			Query<News> query = super.query();
-			if (published != null) {
-				News.State state = News.State.C;
-				if (published) {
-					state = News.State.V;
-				}
-				query.context().addEqualsCriterion(News.STATE_FIELD, state);
+			if (published != null && published) {
+				return getDAO().getAllPublished(limitTo, page);
 			}
-			query.context().orderBy(News.PUBLISH_DATE_FIELD, false);
-			return query;
-		} catch (ColumnContextNotFoundException ex) {
-			throw new QueryException(ex);
+			return getDAO().getAllWithDetails(limitTo, page);
+		} catch (QueryException | DAOInstantiationException ex) {
+			throw new APIException(Response.Status.INTERNAL_SERVER_ERROR, ex);
 		}
 	}
 }

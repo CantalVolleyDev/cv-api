@@ -22,9 +22,9 @@ import com.jtouzy.cv.api.security.RequestSecurityContext;
 import com.jtouzy.cv.api.security.TokenHelper;
 import com.jtouzy.cv.model.classes.User;
 import com.jtouzy.cv.model.dao.UserDAO;
-import com.jtouzy.cv.model.errors.UserNotFoundException;
 import com.jtouzy.dao.DAOManager;
 import com.jtouzy.dao.errors.DAOInstantiationException;
+import com.jtouzy.dao.errors.QueryException;
 
 /** PreMatching est nécessaire sinon l'authentification passe avant le RolesAllowedDynamicFeature */
 @PreMatching
@@ -49,9 +49,9 @@ public class AuthFilter implements ContainerRequestFilter {
 				String mail = TokenHelper.getUserID(auth);
 				User user = null;
 				try {
-					user = DAOManager.getDAO(temporaryConnection, UserDAO.class).findByMail(mail);
+					user = DAOManager.getDAO(temporaryConnection, UserDAO.class).getOneByMail(mail);
 					DAOManager.removeForConnection(temporaryConnection);
-				} catch (UserNotFoundException ex) {}
+				} catch (QueryException ex) {}
 				if (user != null) {
 					client = new Client(user);
 					logger.trace(new StringBuilder().append("Utilisateur authentifié pour la requête [")

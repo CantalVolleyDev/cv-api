@@ -88,7 +88,7 @@ public class ChampionshipResource extends BasicResource<Championship, Championsh
 		if (championshipId == null)
 			throw new BadRequestException("L'identifiant du championnat doit être renseigné");
 		try {
-			Championship championship = getDAO(ChampionshipDAO.class).getChampionshipTeamsAndMatchs(championshipId);
+			Championship championship = getDAO(ChampionshipDAO.class).getOneWithTeamsAndMatchs(championshipId);
 			if (championship == null)
 				throw new NotFoundException("Le championnat " + championshipId + " n'existe pas");
 			return championship;

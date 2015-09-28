@@ -4,8 +4,10 @@ import java.util.List;
 
 import javax.annotation.security.RolesAllowed;
 import javax.validation.constraints.NotNull;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Produces;
@@ -19,23 +21,16 @@ import com.jtouzy.cv.api.security.Client;
 import com.jtouzy.cv.api.security.Roles;
 import com.jtouzy.cv.model.classes.Season;
 import com.jtouzy.cv.model.dao.SeasonDAO;
-import com.jtouzy.cv.model.errors.UserNotFoundException;
 import com.jtouzy.dao.DAO;
 import com.jtouzy.dao.DAOManager;
 import com.jtouzy.dao.errors.DAOCrudException;
 import com.jtouzy.dao.errors.DAOInstantiationException;
 import com.jtouzy.dao.errors.QueryException;
-import com.jtouzy.dao.errors.model.ColumnContextNotFoundException;
-import com.jtouzy.dao.errors.model.FieldContextNotFoundException;
-import com.jtouzy.dao.errors.model.TableContextNotFoundException;
 import com.jtouzy.dao.errors.validation.DataValidationException;
-import com.jtouzy.dao.query.Query;
-import com.jtouzy.dao.query.QueryCollection;
 
 @Produces(MediaType.APPLICATION_JSON)
 public class BasicResource<T, D extends DAO<T>> extends GenericResource {
 	private Class<D> daoClass;
-	private Class<T> objectClass;
 	@QueryParam("season")
 	protected String seasonId;
 	@QueryParam("user")
@@ -43,14 +38,14 @@ public class BasicResource<T, D extends DAO<T>> extends GenericResource {
 	
 	public BasicResource(Class<T> objectClass, Class<D> daoClass) {
 		this.daoClass = daoClass;
-		this.objectClass = objectClass;
+		/* FIXME: objectClass ne sert plus */
 	}
 
 	@GET
 	public List<T> getAll()
 	throws APIException {
 		try {
-			return query().many();
+			return getDAO().getAll();
 		} catch (DAOInstantiationException | QueryException ex) {
 			throw new ProgramException(ex);
 		}
@@ -61,7 +56,7 @@ public class BasicResource<T, D extends DAO<T>> extends GenericResource {
 	public T create(@NotNull T object)
 	throws APIException, DataValidationException {
 		try {
-			return DAOManager.getDAO(getRequestContext().getConnection(), daoClass).create(object);
+			return getDAO().create(object);
 		} catch (DAOInstantiationException | DAOCrudException ex) {
 			throw new ProgramException(ex);
 		}
@@ -72,7 +67,7 @@ public class BasicResource<T, D extends DAO<T>> extends GenericResource {
 	public T update(@NotNull T object)
 	throws APIException, DataValidationException {
 		try {
-			return DAOManager.getDAO(getRequestContext().getConnection(), daoClass).update(object);
+			return getDAO().update(object);
 		} catch (DAOInstantiationException | DAOCrudException ex) {
 			throw new ProgramException(ex);
 		}
@@ -83,24 +78,10 @@ public class BasicResource<T, D extends DAO<T>> extends GenericResource {
 	public void delete(@NotNull T object)
 	throws APIException, DataValidationException {
 		try {
-			DAOManager.getDAO(getRequestContext().getConnection(), daoClass).delete(object);
+			getDAO().delete(object);
 		} catch (DAOInstantiationException | DAOCrudException ex) {
 			throw new ProgramException(ex);
 		}
-	}
-	
-	protected Query<T> query()
-	throws DAOInstantiationException, QueryException {
-		Query<T> query = DAOManager.getDAO(getRequestContext().getConnection(), daoClass).query();
-		manageParams(query);
-		return query;
-	}
-	
-	protected <C> QueryCollection<T,C> queryCollection(Class<C> collectionClass)
-	throws TableContextNotFoundException, ColumnContextNotFoundException, FieldContextNotFoundException {
-		QueryCollection<T,C> query = QueryCollection.build(getRequestContext().getConnection(), this.objectClass, collectionClass);
-		manageParams(query);
-		return query;
 	}
 	
 	protected D getDAO()
@@ -129,22 +110,20 @@ public class BasicResource<T, D extends DAO<T>> extends GenericResource {
 		return null;
 	}
 	
-	protected Integer getUserIDWithParam()
-	throws UserNotFoundException {
-		// TODO revoir les exceptions !!!!
+	protected Integer getUserIDWithParam() {
 		if (userId != null) {
 			Integer userID = null;
 			if (userId.equals("current")) {
 				Client client = getRequestContext().getUserPrincipal();
 				if (client == null) {
-					throw new UserNotFoundException("Aucun utilisateur connecté");
+					throw new NotAuthorizedException("Aucun utilisateur connecté", "");
 				}
 				userID = client.getUser().getIdentifier();
 			} else {
 				try {
 					userID = Integer.parseInt(userId);
 				} catch (NumberFormatException ex) {
-					throw new UserNotFoundException(ex);
+					throw new BadRequestException(ex);
 				}
 			}
 			return userID;
