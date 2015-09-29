@@ -13,6 +13,7 @@ import com.owlike.genson.GensonBuilder;
 public class GensonProvider implements ContextResolver<Genson> {
 	private final Genson genson = 
 			new GensonBuilder().withConverter(new DateConverter(), LocalDateTime.class)
+			                   .useBeanViews(true)
 			                   .exclude("password", User.class)
 			                   .create();
 	@Override
