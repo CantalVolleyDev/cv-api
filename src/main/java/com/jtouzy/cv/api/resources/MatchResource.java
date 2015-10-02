@@ -27,8 +27,8 @@ import com.jtouzy.cv.api.security.TokenHelper;
 import com.jtouzy.cv.model.classes.Comment;
 import com.jtouzy.cv.model.classes.Match;
 import com.jtouzy.cv.model.classes.MatchPlayer;
+import com.jtouzy.cv.model.classes.SeasonTeam;
 import com.jtouzy.cv.model.classes.SeasonTeamPlayer;
-import com.jtouzy.cv.model.classes.Team;
 import com.jtouzy.cv.model.classes.User;
 import com.jtouzy.cv.model.dao.ChampionshipDAO;
 import com.jtouzy.cv.model.dao.CommentDAO;
@@ -189,7 +189,7 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 			// Match soumis par la requête
 			Match submitted = submit.getMatch();
 			Integer submitterTeamId = submit.getUserTeams().get(0);
-			Team submitter = new Team();
+			SeasonTeam submitter = new SeasonTeam();
 			submitter.setIdentifier(submitterTeamId);
 			// Contrôle de l'état du match
 			if (submitted.getState() == Match.State.S || submitted.getState() == Match.State.R) {
