@@ -37,7 +37,7 @@ public class NewsResource extends GenericResource {
 			} else {
 				news = getDAO(NewsDAO.class).getAllWithDetails(limitTo, page);
 			}	
-			return buildViewResponse(NewsView.class, news);
+			return buildViewResponse(news, NewsView.class);
 		} catch (QueryException | DAOInstantiationException ex) {
 			throw new APIException(Response.Status.INTERNAL_SERVER_ERROR, ex);
 		}

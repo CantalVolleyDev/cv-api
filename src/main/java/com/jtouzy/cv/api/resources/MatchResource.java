@@ -21,6 +21,8 @@ import javax.ws.rs.core.Response;
 
 import com.jtouzy.cv.api.errors.APIException;
 import com.jtouzy.cv.api.errors.ProgramException;
+import com.jtouzy.cv.api.resources.beanview.MatchTeamView;
+import com.jtouzy.cv.api.resources.beanview.UserSimpleView;
 import com.jtouzy.cv.api.security.Client;
 import com.jtouzy.cv.api.security.Roles;
 import com.jtouzy.cv.api.security.TokenHelper;
@@ -51,18 +53,19 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 
 	@GET
 	@Path("/{id}/details")
-	public MatchDetails getMatchDetails(@PathParam("id") Integer matchId)
+	public Response getMatchDetails(@PathParam("id") Integer matchId)
 	throws ProgramException, NotFoundException {
 		try {
 			Match match = controlMatchDetails(matchId);
 			MatchDetails details = new MatchDetails();
 			details.setMatch(match);
+			//FIXME: Changer pour prendre direct le gymnase de la première
 			details.setGym(getDAO(SeasonTeamDAO.class).getOneWithDetails(
 					match.getChampionship().getCompetition().getSeason().getIdentifier(), 
 					match.getFirstTeam().getIdentifier()).getGym());
 			addMatchPlayers(details, match);
 			details.setComments(getMatchComments(matchId));
-			return details;
+			return buildViewResponse(details, UserSimpleView.class, MatchTeamView.class);
 		} catch (DAOInstantiationException | QueryException ex) {
 			throw new ProgramException(ex);
 		}
@@ -82,7 +85,7 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 	@GET
 	@Path("/{id}/submitInfos")
 	@RolesAllowed(Roles.CONNECTED)
-	public MatchSubmitInfos getMatchSubmitInfos(@PathParam("id") Integer matchId)
+	public MatchInfos getMatchSubmitInfos(@PathParam("id") Integer matchId)
 	throws ProgramException, NotAuthorizedException, NotFoundException {
 		try {
 			// Lecture du match avec détails (Exception si le match n'existe pas)

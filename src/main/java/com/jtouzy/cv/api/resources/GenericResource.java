@@ -6,6 +6,7 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.ext.Providers;
 
 import com.jtouzy.cv.api.security.RequestSecurityContext;
@@ -33,11 +34,15 @@ public class GenericResource {
 		return (RequestSecurityContext)requestContext.getSecurityContext();
 	}
 	
-	@SuppressWarnings("unchecked")
-	protected <T> Response buildViewResponse(Class<? extends BeanView<T>> viewClass, Object object) {
+	@SafeVarargs
+	protected final <T> Response buildViewResponse(Object object, Class<? extends BeanView<T>> firstView, Class<? extends BeanView<?>>... viewClasses) {
+		return getBuilderViewResponse(object, firstView, viewClasses).build();
+	}
+	
+	@SafeVarargs
+	protected final <T> ResponseBuilder getBuilderViewResponse(Object object, Class<? extends BeanView<T>> firstView, Class<? extends BeanView<?>>... viewClasses) {
 		Genson genson = providers.getContextResolver(Genson.class, null).getContext(Object.class);
 		return Response.status(Response.Status.OK)
-				       .entity(genson.serialize(object, viewClass))
-				       .build();
+				       .entity(genson.serialize(object, firstView, viewClasses));
 	}
 }

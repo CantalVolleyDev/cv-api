@@ -20,7 +20,7 @@ import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.jtouzy.cv.api.errors.APIException;
-import com.jtouzy.cv.api.images.ImageFinder;
+import com.jtouzy.cv.api.resources.beanview.UserLoginView;
 import com.jtouzy.cv.api.security.Client;
 import com.jtouzy.cv.api.security.Roles;
 import com.jtouzy.cv.model.classes.Match;
@@ -42,10 +42,8 @@ public class UserResource extends GenericResource {
 	public Response login(UserLoginParameters logParameters)
 	throws NotAuthorizedException {
 		User user = commonLogin(logParameters);
-		return Response.status(Response.Status.OK)
-			           .cookie(Client.createAuthCookie(user))
-			           .entity(user)
-			           .build();
+		return getBuilderViewResponse(user, UserLoginView.class).cookie(Client.createAuthCookie(user))
+				                                                .build();
 	}
 	
 	@POST
@@ -96,7 +94,7 @@ public class UserResource extends GenericResource {
 		Client client = getRequestContext().getUserPrincipal();
 		ResponseBuilder rB = Response.status(Response.Status.OK);
 		if (client != null) {
-			rB.entity(client.getUser());
+			rB = getBuilderViewResponse(client.getUser(), UserLoginView.class);
 		}
 		return rB.build();
 	}
@@ -120,7 +118,6 @@ public class UserResource extends GenericResource {
 			Integer currentUser = getRequestContext().getUserPrincipal().getUser().getIdentifier();
 			infos.setTeams(getDAO(SeasonTeamPlayerDAO.class).getAllBySeasonAndPlayer(currentSeason, currentUser));
 			infos.setMatchs(getDAO(MatchDAO.class).getAllBySeasonAndUser(currentSeason, currentUser));
-			infos.setUploadImage(ImageFinder.isUserImageExists(currentUser));
 			return infos;
 		} catch (DAOInstantiationException | QueryException ex) {
 			throw new APIException(Response.Status.INTERNAL_SERVER_ERROR, ex);
