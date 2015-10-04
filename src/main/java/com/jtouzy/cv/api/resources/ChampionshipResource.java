@@ -13,6 +13,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 import com.jtouzy.cv.model.classes.Championship;
@@ -46,11 +47,15 @@ public class ChampionshipResource extends BasicResource<Championship, Championsh
 	@GET
 	@Path("/{id}/previewCalendar")
 	@Produces(MediaType.TEXT_HTML + ";charset=utf-8")
-	public String previewCalendar(@PathParam("id") Integer championshipId)
+	public String previewCalendar(@PathParam("id") Integer championshipId, @QueryParam("return") Boolean returnMatchs)
 	throws CalendarGenerationException, DAOInstantiationException {
 		final StringBuilder text = new StringBuilder();
 		text.append("<html><head><title>Prévisualisation</title></head><body>");
-		List<Match> matchs = ChampionshipCalendarGenerator.listMatchs(getRequestContext().getConnection(), championshipId, true);
+		boolean returnMatchsFlag = false;
+		if (returnMatchs != null) {
+			returnMatchsFlag = returnMatchs;
+		}
+		List<Match> matchs = ChampionshipCalendarGenerator.listMatchs(getRequestContext().getConnection(), championshipId, returnMatchsFlag);
 		
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE dd-MM-yyyy, HH:mm");
 		Map<Integer, List<Match>> matchsByStep = matchs.stream()
@@ -71,6 +76,8 @@ public class ChampionshipResource extends BasicResource<Championship, Championsh
 				    .append(m.getSecondTeam().getLabel())
 				    .append(" (")
 				    .append(m.getDate().format(formatter))
+				    .append(", ")
+				    .append(m.getFirstTeam().getGym().getLabel())
 				    .append(")")
 				    .append("<br>");
 			});
