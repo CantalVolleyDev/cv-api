@@ -36,7 +36,6 @@ import com.jtouzy.cv.model.dao.ChampionshipDAO;
 import com.jtouzy.cv.model.dao.CommentDAO;
 import com.jtouzy.cv.model.dao.MatchDAO;
 import com.jtouzy.cv.model.dao.MatchPlayerDAO;
-import com.jtouzy.cv.model.dao.SeasonTeamDAO;
 import com.jtouzy.cv.model.dao.SeasonTeamPlayerDAO;
 import com.jtouzy.cv.model.dao.UserDAO;
 import com.jtouzy.cv.model.errors.RankingsCalculateException;
@@ -59,10 +58,7 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 			Match match = controlMatchDetails(matchId);
 			MatchDetails details = new MatchDetails();
 			details.setMatch(match);
-			//FIXME: Changer pour prendre direct le gymnase de la première
-			details.setGym(getDAO(SeasonTeamDAO.class).getOneWithDetails(
-					match.getChampionship().getCompetition().getSeason().getIdentifier(), 
-					match.getFirstTeam().getIdentifier()).getGym());
+			details.setGym(match.getFirstTeam().getGym());
 			addMatchPlayers(details, match);
 			details.setComments(getDAO(CommentDAO.class).getAllByMatch(matchId));
 			return buildViewResponse(details, UserSimpleView.class, MatchTeamView.class);
@@ -96,8 +92,7 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 			// Select unique pour récupérer tous les joueurs des 2 équipes
 			// On fait ensuite un tri pour diviser, à la place de faire 2 select
 			List<SeasonTeamPlayer> allPlayers = 
-					getDAO(SeasonTeamPlayerDAO.class).getAllBySeasonAndTeamIn(
-							match.getChampionship().getCompetition().getSeason().getIdentifier(), 
+					getDAO(SeasonTeamPlayerDAO.class).getAllBySeasonTeamIn(
 							Arrays.asList(match.getFirstTeam().getIdentifier(), 
 									      match.getSecondTeam().getIdentifier()));
 			// On contrôle que l'un des joueurs d'une des deux équipes soit le joueur connecté
