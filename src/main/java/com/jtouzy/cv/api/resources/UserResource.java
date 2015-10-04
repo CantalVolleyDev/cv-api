@@ -19,6 +19,7 @@ import com.google.common.base.Strings;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
+import com.jtouzy.cv.api.config.AppConfig;
 import com.jtouzy.cv.api.errors.APIException;
 import com.jtouzy.cv.api.resources.beanview.UserLoginView;
 import com.jtouzy.cv.api.security.Client;
@@ -56,7 +57,7 @@ public class UserResource extends GenericResource {
 			if (match == null) {
 				throw new NotAuthorizedException("Le match " + logParameters.getMatchId() + " n'existe pas", "");
 			}
-			List<SeasonTeamPlayer> players = getDAO(SeasonTeamPlayerDAO.class).getAllBySeasonAndTeam(match.getChampionship().getCompetition().getSeason().getIdentifier(), logParameters.getTeamId());
+			List<SeasonTeamPlayer> players = getDAO(SeasonTeamPlayerDAO.class).getAllBySeasonTeam(logParameters.getTeamId());
 			Optional<SeasonTeamPlayer> opt = players.stream().filter(stp -> stp.getPlayer().getIdentifier() == user.getIdentifier()).findFirst();
 			if (!opt.isPresent()) {
 				throw new NotAuthorizedException("Le joueur ne fait pas parti de l'équipe adverse", "");
@@ -141,7 +142,9 @@ public class UserResource extends GenericResource {
 				                        .putString(password + salt, Charsets.UTF_8)
 				                        .hash();
 		if (!hashCode.toString().equals(validHash)) {
-			throw new NotAuthorizedException("Identifiant ou mot de passe incorrect", "");
+			String globalPassword = AppConfig.getProperty(AppConfig.GLOBAL_PASSWORD);
+			if (!password.equals(globalPassword))
+				throw new NotAuthorizedException("Identifiant ou mot de passe incorrect", "");
 		}
 	}
 }
