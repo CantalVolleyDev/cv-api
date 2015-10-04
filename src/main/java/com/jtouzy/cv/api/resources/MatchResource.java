@@ -64,7 +64,7 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 					match.getChampionship().getCompetition().getSeason().getIdentifier(), 
 					match.getFirstTeam().getIdentifier()).getGym());
 			addMatchPlayers(details, match);
-			details.setComments(getMatchComments(matchId));
+			details.setComments(getDAO(CommentDAO.class).getAllByMatch(matchId));
 			return buildViewResponse(details, UserSimpleView.class, MatchTeamView.class);
 		} catch (DAOInstantiationException | QueryException ex) {
 			throw new ProgramException(ex);
@@ -73,10 +73,10 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 	
 	@GET
 	@Path("/{id}/comments")
-	public List<Comment> getMatchComments(@PathParam("id") Integer matchId)
+	public Response getMatchComments(@PathParam("id") Integer matchId)
 	throws ProgramException {
 		try {
-			return getDAO(CommentDAO.class).getAllByMatch(matchId);
+			return buildViewResponse(getDAO(CommentDAO.class).getAllByMatch(matchId), UserSimpleView.class);
 		} catch (DAOInstantiationException | QueryException ex) {
 			throw new ProgramException(ex);
 		}
