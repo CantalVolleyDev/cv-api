@@ -85,7 +85,7 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 	@GET
 	@Path("/{id}/submitInfos")
 	@RolesAllowed(Roles.CONNECTED)
-	public MatchInfos getMatchSubmitInfos(@PathParam("id") Integer matchId)
+	public MatchSubmitInfos getMatchSubmitInfos(@PathParam("id") Integer matchId)
 	throws ProgramException, NotAuthorizedException, NotFoundException {
 		try {
 			// Lecture du match avec détails (Exception si le match n'existe pas)
@@ -217,15 +217,17 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 				}
 			}
 			if (validateSubmitter) {
+				Integer nbp = null;
 				if (submitterTeamId == submitted.getFirstTeam().getIdentifier()) {
 					validatePlayers.addAll(submit.getFirstTeamMatchPlayers());
+					nbp = submitted.getFirstTeam().getPlayersNumber();
 				} else {
 					validatePlayers.addAll(submit.getSecondTeamMatchPlayers());
+					nbp = submitted.getSecondTeam().getPlayersNumber();
 				}
-				if (validatePlayers.size() < 3) {
-					throw new DataValidationException("Au moins trois joueurs doivent être renseignés");
+				if (validatePlayers.size() < nbp) {
+					throw new DataValidationException("Au moins " + nbp + " joueurs doivent être renseignés");
 				}
-				//TODO Contrôle par rapport à l'engagement en 3 ou 4
 			}
 			Comment submitterComment = submit.getSubmitterComment();
 			if (submitterComment != null) {
