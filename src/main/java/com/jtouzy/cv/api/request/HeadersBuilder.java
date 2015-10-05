@@ -8,9 +8,17 @@ import java.util.Optional;
 import javax.ws.rs.container.ContainerRequestContext;
 
 import com.google.common.base.Splitter;
-import com.jtouzy.cv.api.config.AppConfig;
+import com.jtouzy.cv.config.PropertiesNames;
+import com.jtouzy.cv.config.PropertiesReader;
 
 public class HeadersBuilder {
+	private static final String ALLOW_ORIGIN = "Access-Control-Allow-Origin";
+	private static final String ALLOW_CREDENTIALS = "Access-Control-Allow-Credentials";
+	private static final String ALLOW_HEADERS = "Access-Control-Allow-Headers";
+	
+	private static final String HEADER_CONTENT_TYPE = "ContentType";
+	private static final String HEADER_ORIGIN = "Origin";
+	
 	private Map<String, String> headers;
 	
 	public HeadersBuilder() {
@@ -24,28 +32,28 @@ public class HeadersBuilder {
 	}
 	
 	private void addAllowedOrigins(ContainerRequestContext requestContext) {
-		String property = AppConfig.getProperty(AppConfig.ORIGIN_ALLOWED);
+		String property = PropertiesReader.getProperty(PropertiesNames.ORIGIN_ALLOWED);
 		if (property != null) {
 			if (property.contains(",")) {
-				List<String> origins = requestContext.getHeaders().get("Origin");
+				List<String> origins = requestContext.getHeaders().get(HEADER_ORIGIN);
 				if (origins != null && origins.size() > 0) {
 					String origin = origins.get(0);
 					List<String> authorized = Splitter.on(',').omitEmptyStrings().splitToList(property);
 					Optional<String> opt = authorized.stream().filter(d -> d.equals(origin)).findFirst();
 					if (opt.isPresent()) {
-						this.headers.put("Access-Control-Allow-Origin", opt.get());
-						this.headers.put("Access-Control-Allow-Credentials", "true");
+						this.headers.put(ALLOW_ORIGIN, opt.get());
+						this.headers.put(ALLOW_CREDENTIALS, "true");
 					}
 				}
 				
 			} else {
-				this.headers.put("Access-Control-Allow-Origin", property);
-				this.headers.put("Access-Control-Allow-Credentials", "true");
+				this.headers.put(ALLOW_ORIGIN, property);
+				this.headers.put(ALLOW_CREDENTIALS, "true");
 			}
 		}
 	}
 	
 	private void addAllowedRequestHeaders() {
-		this.headers.put("Access-Control-Allow-Headers", "Content-Type");
+		this.headers.put(ALLOW_HEADERS, HEADER_CONTENT_TYPE);
 	}
 }

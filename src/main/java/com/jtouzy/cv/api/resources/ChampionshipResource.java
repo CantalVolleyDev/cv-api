@@ -21,7 +21,11 @@ import com.jtouzy.cv.model.classes.Match;
 import com.jtouzy.cv.model.dao.ChampionshipDAO;
 import com.jtouzy.cv.model.errors.CalendarGenerationException;
 import com.jtouzy.cv.model.errors.RankingsCalculateException;
-import com.jtouzy.cv.model.utils.ChampionshipCalendarGenerator;
+import com.jtouzy.cv.tools.ToolLauncher;
+import com.jtouzy.cv.tools.executors.calgen.ChampionshipCalendarGenerator;
+import com.jtouzy.cv.tools.model.ParameterNames;
+import com.jtouzy.cv.tools.model.ToolExecutor;
+import com.jtouzy.cv.tools.model.ToolsList;
 import com.jtouzy.dao.errors.DAOInstantiationException;
 import com.jtouzy.dao.errors.QueryException;
 import com.jtouzy.dao.errors.validation.DataValidationException;
@@ -55,7 +59,19 @@ public class ChampionshipResource extends BasicResource<Championship, Championsh
 		if (returnMatchs != null) {
 			returnMatchsFlag = returnMatchs;
 		}
-		List<Match> matchs = ChampionshipCalendarGenerator.listMatchs(getRequestContext().getConnection(), championshipId, returnMatchsFlag);
+		
+		// Appel de l'outil de génération du calendrier
+		ToolLauncher launcher = ToolLauncher.build()
+											.target(ToolsList.CALENDAR_GEN)
+											.useConnection(getRequestContext().getConnection())
+											.addParameter(ParameterNames.ID, championshipId)
+											.addParameter(ParameterNames.SIMULATION, true);
+		if (returnMatchsFlag)
+			launcher.addParameter(ParameterNames.RETURN, true);
+
+		ToolExecutor executor = launcher.run().instance(); 
+		ChampionshipCalendarGenerator generator = (ChampionshipCalendarGenerator)executor;
+		List<Match> matchs = generator.getMatchs();
 		
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE dd-MM-yyyy, HH:mm");
 		Map<Integer, List<Match>> matchsByStep = matchs.stream()

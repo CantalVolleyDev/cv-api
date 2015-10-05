@@ -13,6 +13,7 @@ import com.jtouzy.cv.api.config.AppConfig;
 import com.jtouzy.cv.api.errors.APIConfigurationException;
 import com.jtouzy.cv.api.errors.CacheLoadException;
 import com.jtouzy.cv.model.dao.SeasonDAO;
+import com.jtouzy.cv.tools.mail.MailManager;
 import com.jtouzy.dao.DAOManager;
 import com.jtouzy.dao.errors.DAOInstantiationException;
 import com.jtouzy.dao.errors.QueryException;
@@ -39,6 +40,7 @@ public class APIServlet extends ServletContainer {
 		try {
 			AppConfig.init();
 			DAOManager.init("com.jtouzy.cv.model.classes");
+			MailManager.init();
 			loadCachedData();
 		} catch (ModelClassDefinitionException | APIConfigurationException ex) {
 			throw new ServletException(ex);
