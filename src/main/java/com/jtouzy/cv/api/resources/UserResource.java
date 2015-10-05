@@ -17,6 +17,7 @@ import org.apache.logging.log4j.Logger;
 import com.google.common.base.Strings;
 import com.jtouzy.cv.api.errors.APIException;
 import com.jtouzy.cv.api.resources.beanview.UserLoginView;
+import com.jtouzy.cv.api.resources.params.ChangePasswordParameters;
 import com.jtouzy.cv.api.security.Client;
 import com.jtouzy.cv.api.security.Roles;
 import com.jtouzy.cv.model.classes.Match;
@@ -27,8 +28,11 @@ import com.jtouzy.cv.model.dao.SeasonDAO;
 import com.jtouzy.cv.model.dao.SeasonTeamPlayerDAO;
 import com.jtouzy.cv.model.dao.UserDAO;
 import com.jtouzy.cv.security.UserPassword;
+import com.jtouzy.cv.tools.mail.MailBuilder;
+import com.jtouzy.dao.errors.DAOCrudException;
 import com.jtouzy.dao.errors.DAOInstantiationException;
 import com.jtouzy.dao.errors.QueryException;
+import com.jtouzy.dao.errors.validation.DataValidationException;
 
 @Path("/user")
 public class UserResource extends GenericResource {
@@ -107,6 +111,30 @@ public class UserResource extends GenericResource {
 				       .build();
 	}
 	
+	@POST
+	@Path("/changePassword")
+	@RolesAllowed(Roles.CONNECTED)
+	public void changePassword(ChangePasswordParameters chgPasswordParams) {
+		checkChangePasswordParamsNotNull(chgPasswordParams);
+		User currentUser = getRequestContext().getUserPrincipal().getUser();
+		if (!currentUser.getMail().equals(chgPasswordParams.mail))
+			throw new NotAuthorizedException("Impossible de modifier le mot de passe d'un autre utilisateur", "");
+		try {
+			UserPassword.checkPassword(currentUser, chgPasswordParams.password);
+		} catch (SecurityException ex) {
+			throw new NotAuthorizedException(ex.getMessage(), "");
+		}
+		if (!chgPasswordParams.newPassword.equals(chgPasswordParams.newPasswordConfirm))
+			throw new NotAuthorizedException("La confirmation du nouveau mot de passe n'est pas conforme", "");
+		currentUser.setPassword(UserPassword.getFullHashedNewPassword(chgPasswordParams.newPassword));
+		try {
+			getDAO(UserDAO.class).update(currentUser);
+		} catch (DAOInstantiationException | DAOCrudException | DataValidationException ex) {
+			throw new NotAuthorizedException(ex);
+		}
+		MailBuilder.sendMailNewPassword(currentUser, chgPasswordParams.newPassword);
+	}
+	
 	@GET
 	@Path("/account")
 	@RolesAllowed(Roles.CONNECTED)
@@ -129,5 +157,15 @@ public class UserResource extends GenericResource {
 			Strings.isNullOrEmpty(logParameters.mail) ||
 			Strings.isNullOrEmpty(logParameters.password))
 			throw new NotAuthorizedException("Informations incomplètes pour traiter la connexion", "");
+	}
+	
+	private void checkChangePasswordParamsNotNull(ChangePasswordParameters chgPasswordParameters)
+	throws NotAuthorizedException {
+		if (chgPasswordParameters == null || 
+			Strings.isNullOrEmpty(chgPasswordParameters.mail) ||
+			Strings.isNullOrEmpty(chgPasswordParameters.password) ||
+			Strings.isNullOrEmpty(chgPasswordParameters.newPassword) ||
+			Strings.isNullOrEmpty(chgPasswordParameters.newPasswordConfirm))
+			throw new NotAuthorizedException("Informations incomplètes pour traiter le changement de mot de passe", "");
 	}
 }
