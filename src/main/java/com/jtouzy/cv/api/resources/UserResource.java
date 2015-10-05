@@ -14,12 +14,7 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
-import com.google.common.hash.HashCode;
-import com.google.common.hash.HashFunction;
-import com.google.common.hash.Hashing;
-import com.jtouzy.cv.api.config.AppConfig;
 import com.jtouzy.cv.api.errors.APIException;
 import com.jtouzy.cv.api.resources.beanview.UserLoginView;
 import com.jtouzy.cv.api.security.Client;
@@ -31,6 +26,7 @@ import com.jtouzy.cv.model.dao.MatchDAO;
 import com.jtouzy.cv.model.dao.SeasonDAO;
 import com.jtouzy.cv.model.dao.SeasonTeamPlayerDAO;
 import com.jtouzy.cv.model.dao.UserDAO;
+import com.jtouzy.cv.security.UserPassword;
 import com.jtouzy.dao.errors.DAOInstantiationException;
 import com.jtouzy.dao.errors.QueryException;
 
@@ -81,10 +77,12 @@ public class UserResource extends GenericResource {
 				throw new NotAuthorizedException("Identifiant ou mot de passe incorrect", "");
 			}
 			logger.trace("Mail retrouvé : Vérification du mot de passe");
-			checkPassword(user, logParameters.password);
+			UserPassword.checkPassword(user, logParameters.password);
 			logger.trace("Mot de passe valide : Connexion réussie");
 			return user;
-		} catch (DAOInstantiationException | QueryException ex) {
+		} catch (DAOInstantiationException | QueryException | SecurityException ex) {
+			if (ex instanceof SecurityException)
+				throw new NotAuthorizedException(ex.getMessage(), "");
 			throw new NotAuthorizedException(ex, "");
 		}
 	}
@@ -131,20 +129,5 @@ public class UserResource extends GenericResource {
 			Strings.isNullOrEmpty(logParameters.mail) ||
 			Strings.isNullOrEmpty(logParameters.password))
 			throw new NotAuthorizedException("Informations incomplètes pour traiter la connexion", "");
-	}
-	
-	private void checkPassword(User user, String password)
-	throws NotAuthorizedException {
-		String salt = user.getPassword().substring(0, 64);
-		String validHash = user.getPassword().substring(64);
-		HashFunction hashFunction = Hashing.sha256();
-		HashCode hashCode = hashFunction.newHasher()
-				                        .putString(password + salt, Charsets.UTF_8)
-				                        .hash();
-		if (!hashCode.toString().equals(validHash)) {
-			String globalPassword = AppConfig.getProperty(AppConfig.GLOBAL_PASSWORD);
-			if (!password.equals(globalPassword))
-				throw new NotAuthorizedException("Identifiant ou mot de passe incorrect", "");
-		}
 	}
 }
