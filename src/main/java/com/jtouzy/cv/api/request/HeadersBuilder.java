@@ -16,7 +16,7 @@ public class HeadersBuilder {
 	private static final String ALLOW_CREDENTIALS = "Access-Control-Allow-Credentials";
 	private static final String ALLOW_HEADERS = "Access-Control-Allow-Headers";
 	
-	private static final String HEADER_CONTENT_TYPE = "ContentType";
+	private static final String HEADER_CONTENT_TYPE = "Content-Type";
 	private static final String HEADER_ORIGIN = "Origin";
 	
 	private Map<String, String> headers;
