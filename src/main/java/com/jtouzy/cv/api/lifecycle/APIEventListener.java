@@ -26,6 +26,9 @@ public class APIEventListener implements ApplicationEventListener {
 	}
 	@Override
 	public RequestEventListener onRequest(RequestEvent requestEvent) {
+		if (requestEvent.getContainerRequest().getMethod().equals("OPTIONS"))
+			return null;
+		
 		StringBuilder log = new StringBuilder();
 		requestCount++;
 		log.append("Requête n°")
