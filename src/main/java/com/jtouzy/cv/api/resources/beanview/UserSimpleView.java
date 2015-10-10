@@ -21,8 +21,8 @@ public class UserSimpleView implements BeanView<User> {
 		if (extension != null) {
 			return "images/user" + user.getIdentifier() + "." + extension.toLowerCase(); 
 		}
-		if (user.getGender() == User.Gender.M)
-			return "images/user-male-default.png";
-		else return "images/user-female-default.png";
+		if (user.getGender() == User.Gender.F)
+			return "images/user-female-default.png";
+		else return "images/user-male-default.png";
 	}
 }
