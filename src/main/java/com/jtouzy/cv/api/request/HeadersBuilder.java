@@ -15,9 +15,11 @@ public class HeadersBuilder {
 	private static final String ALLOW_ORIGIN = "Access-Control-Allow-Origin";
 	private static final String ALLOW_CREDENTIALS = "Access-Control-Allow-Credentials";
 	private static final String ALLOW_HEADERS = "Access-Control-Allow-Headers";
+	private static final String ALLOW_METHODS = "Access-Control-Allow-Methods";
 	
 	private static final String HEADER_CONTENT_TYPE = "Content-Type";
 	private static final String HEADER_ORIGIN = "Origin";
+	private static final String HEADER_ALLOWED_METHODS = "GET,PUT,POST,DELETE,OPTIONS";
 	
 	private Map<String, String> headers;
 	
@@ -55,5 +57,6 @@ public class HeadersBuilder {
 	
 	private void addAllowedRequestHeaders() {
 		this.headers.put(ALLOW_HEADERS, HEADER_CONTENT_TYPE);
+		this.headers.put(ALLOW_METHODS, HEADER_ALLOWED_METHODS);
 	}
 }
