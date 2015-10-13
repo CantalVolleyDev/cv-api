@@ -68,7 +68,7 @@ public class TeamResource extends GenericResource {
 			if (!user.isAdministrator()) {
 				Optional<SeasonTeamPlayer> opt = players.stream()
 						                                .filter(stp -> {
-						                                	return stp.getPlayer().getIdentifier() == user.getIdentifier(); 
+						                                	return stp.getPlayer().getIdentifier().equals(user.getIdentifier()); 
 						                                })
 						                                .findFirst();
 				if (!opt.isPresent())

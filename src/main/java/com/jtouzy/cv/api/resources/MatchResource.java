@@ -98,7 +98,7 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 			// On contrôle que l'un des joueurs d'une des deux équipes soit le joueur connecté
 			final Integer connectedId = getCurrentSubmitUser().getIdentifier();
 			List<SeasonTeamPlayer> connectedPlayer = allPlayers.stream()
-					                                           .filter(s -> s.getPlayer().getIdentifier() == connectedId)
+					                                           .filter(s -> s.getPlayer().getIdentifier().equals(connectedId))
 					                                           .collect(Collectors.toList());
 			if (connectedPlayer.size() == 0) {
 				throw new NotAuthorizedException("Impossible de visualiser les données de ce match : Vous ne faites parti d'aucune des deux équipes", "");
@@ -107,9 +107,9 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 			// On contrôle que l'équipe qui a soumis le score ne peut pas revenir le soumettre
 			if ((match.getState() == Match.State.S || match.getState() == Match.State.R) && connectedPlayer.size() == 1) {
 				Integer connectedPlayerTeam = connectedPlayer.get(0).getTeam().getIdentifier();
-				if (match.getScoreSettingTeam().getIdentifier() == connectedPlayerTeam) {
+				if (match.getScoreSettingTeam().getIdentifier().equals(connectedPlayerTeam)) {
 					String teamLabel = match.getFirstTeam().getLabel();
-					if (match.getSecondTeam().getIdentifier() == match.getScoreSettingTeam().getIdentifier())
+					if (match.getSecondTeam().getIdentifier().equals(match.getScoreSettingTeam().getIdentifier()))
 						teamLabel = match.getSecondTeam().getLabel();
 					throw new NotAuthorizedException("Le score du match a déjà été soumis par l'équipe " + teamLabel, "");
 				}
@@ -123,10 +123,10 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 			infos.setMatch(match);
 			addMatchPlayers(infos, match);
 			infos.setFirstTeamPlayers(allPlayers.stream()
-					                            .filter(s -> s.getTeam().getIdentifier() == match.getFirstTeam().getIdentifier())
+					                            .filter(s -> s.getTeam().getIdentifier().equals(match.getFirstTeam().getIdentifier()))
 					                            .collect(Collectors.toList()));
 			infos.setSecondTeamPlayers(allPlayers.stream()
-					                             .filter(s -> s.getTeam().getIdentifier() == match.getSecondTeam().getIdentifier())
+					                             .filter(s -> s.getTeam().getIdentifier().equals(match.getSecondTeam().getIdentifier()))
 					                             .collect(Collectors.toList()));
 			// Affectation des équipes du joueur (la plupart du temps une seule, sauf dans le cas
 			// ou le joueur fait parti des 2 équipes du match
@@ -146,10 +146,10 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 		// Recherche des joueurs déjà saisis pour le match
 		List<MatchPlayer> matchPlayers = getDAO(MatchPlayerDAO.class).getAllByMatch(match.getIdentifier());
 		infos.setFirstTeamMatchPlayers(matchPlayers.stream()
-                						           .filter(p -> p.getTeam().getIdentifier() == match.getFirstTeam().getIdentifier())
+                						           .filter(p -> p.getTeam().getIdentifier().equals(match.getFirstTeam().getIdentifier()))
                 						           .collect(Collectors.toList()));
 		infos.setSecondTeamMatchPlayers(matchPlayers.stream()
-                 									.filter(p -> p.getTeam().getIdentifier() == match.getSecondTeam().getIdentifier())
+                 									.filter(p -> p.getTeam().getIdentifier().equals(match.getSecondTeam().getIdentifier()))
                  									.collect(Collectors.toList()));
 	}
 	
@@ -213,7 +213,7 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 			}
 			if (validateSubmitter) {
 				Integer nbp = null;
-				if (submitterTeamId == submitted.getFirstTeam().getIdentifier()) {
+				if (submitterTeamId.equals(submitted.getFirstTeam().getIdentifier())) {
 					validatePlayers.addAll(submit.getFirstTeamMatchPlayers());
 					nbp = submitted.getFirstTeam().getPlayersNumber();
 				} else {

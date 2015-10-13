@@ -58,7 +58,7 @@ public class UserResource extends GenericResource {
 				throw new NotAuthorizedException("Le match " + logParameters.getMatchId() + " n'existe pas", "");
 			}
 			List<SeasonTeamPlayer> players = getDAO(SeasonTeamPlayerDAO.class).getAllBySeasonTeam(logParameters.getTeamId());
-			Optional<SeasonTeamPlayer> opt = players.stream().filter(stp -> stp.getPlayer().getIdentifier() == user.getIdentifier()).findFirst();
+			Optional<SeasonTeamPlayer> opt = players.stream().filter(stp -> stp.getPlayer().getIdentifier().equals(user.getIdentifier())).findFirst();
 			if (!opt.isPresent()) {
 				throw new NotAuthorizedException("Le joueur ne fait pas parti de l'équipe adverse", "");
 			}
@@ -134,6 +134,13 @@ public class UserResource extends GenericResource {
 		}
 		MailBuilder.sendMailNewPassword(currentUser, chgPasswordParams.newPassword);
 	}
+	
+	/*@POST
+	@Path("/upload")
+	@RolesAllowed(Roles.CONNECTED)
+	public void upload() {
+		
+	}*/
 	
 	@GET
 	@Path("/account")
