@@ -29,6 +29,7 @@ import com.jtouzy.cv.model.classes.SeasonTeamPlayer;
 import com.jtouzy.cv.model.classes.User;
 import com.jtouzy.cv.model.dao.CommentDAO;
 import com.jtouzy.cv.model.dao.GymDAO;
+import com.jtouzy.cv.model.dao.MatchDAO;
 import com.jtouzy.cv.model.dao.SeasonTeamDAO;
 import com.jtouzy.cv.model.dao.SeasonTeamPlayerDAO;
 import com.jtouzy.cv.tools.ToolLauncher;
@@ -99,6 +100,7 @@ public class TeamResource extends GenericResource {
 			infos.setSeasonTeam(st);
 			infos.setPlayers(getDAO(SeasonTeamPlayerDAO.class).getAllBySeasonTeam(teamId));
 			infos.setComments(getDAO(CommentDAO.class).getAllByTeam(teamId));
+			infos.setLastMatchs(getDAO(MatchDAO.class).getAllPlayedBySeasonTeam(teamId, 5));
 			return buildViewResponse(infos, TeamView.class, UserView.class);
 		} catch (DAOInstantiationException | QueryException ex) {
 			throw new ProgramException(ex);
