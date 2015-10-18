@@ -3,4 +3,5 @@
 .settings/
 target/
 webapp.properties
+webdvt.properties
 webprod.properties
