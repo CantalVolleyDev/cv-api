@@ -1,25 +1,36 @@
 package com.jtouzy.cv.api.resources;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
 
 import javax.annotation.security.RolesAllowed;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import com.google.common.base.Strings;
 import com.jtouzy.cv.api.errors.APIException;
+import com.jtouzy.cv.api.errors.ProgramException;
+import com.jtouzy.cv.api.io.FileManager;
 import com.jtouzy.cv.api.resources.beanview.UserLoginView;
 import com.jtouzy.cv.api.resources.params.ChangePasswordParameters;
+import com.jtouzy.cv.api.resources.params.UploadValidationParameters;
 import com.jtouzy.cv.api.security.Client;
 import com.jtouzy.cv.api.security.Roles;
+import com.jtouzy.cv.config.PropertiesNames;
+import com.jtouzy.cv.config.PropertiesReader;
 import com.jtouzy.cv.model.classes.Match;
 import com.jtouzy.cv.model.classes.SeasonTeamPlayer;
 import com.jtouzy.cv.model.classes.User;
@@ -33,6 +44,7 @@ import com.jtouzy.dao.errors.DAOCrudException;
 import com.jtouzy.dao.errors.DAOInstantiationException;
 import com.jtouzy.dao.errors.QueryException;
 import com.jtouzy.dao.errors.validation.DataValidationException;
+import com.jtouzy.utils.ftp.FTPCli;
 
 @Path("/user")
 public class UserResource extends GenericResource {
@@ -135,12 +147,43 @@ public class UserResource extends GenericResource {
 		MailBuilder.sendMailNewPassword(currentUser, chgPasswordParams.newPassword);
 	}
 	
-	/*@POST
+	@POST
 	@Path("/upload")
+	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@RolesAllowed(Roles.CONNECTED)
-	public void upload() {
-		
-	}*/
+	public UploadValidationParameters upload(@FormDataParam("file") InputStream uploadedInputStream,
+			           @FormDataParam("file") FormDataContentDisposition fileData)
+	throws IOException {
+		UploadValidationParameters validation = new UploadValidationParameters();
+		validation.uploadedFilePath = FileManager.createUploadFile(uploadedInputStream, 
+				    											   fileData.getFileName());
+		return validation;
+	}
+	
+	@POST
+	@Path("/validateUpload")
+	@RolesAllowed(Roles.CONNECTED)
+	public void validateUpload(UploadValidationParameters uploadParameters)
+	throws IOException, DataValidationException {
+		User currentUser = getRequestContext().getUserPrincipal().getUser();
+		String extension = FileManager.getExtension(uploadParameters.uploadedFilePath);
+		final StringBuilder remoteFile = new StringBuilder();
+		remoteFile.append(PropertiesReader.getProperty(PropertiesNames.FILE_REMOTE_UPLOAD_PATH) + "/user")
+		          .append(currentUser.getIdentifier())
+		          .append(".")
+		          .append(extension);
+		FTPCli.connect(PropertiesReader.getProperty(PropertiesNames.WEBAPP_FTP_HOST), 
+				       PropertiesReader.getProperty(PropertiesNames.WEBAPP_FTP_USER),
+				       PropertiesReader.getProperty(PropertiesNames.WEBAPP_FTP_PASSWORD))
+		      .uploadFiles(uploadParameters.uploadedFilePath, remoteFile.toString())
+		      .execute();
+		currentUser.setImage(extension);
+		try {
+			getDAO(UserDAO.class).update(currentUser);
+		} catch (DAOInstantiationException | DAOCrudException ex) {
+			throw new ProgramException(extension);
+		}
+	}
 	
 	@GET
 	@Path("/account")
