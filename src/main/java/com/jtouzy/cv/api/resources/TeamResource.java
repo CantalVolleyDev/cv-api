@@ -75,7 +75,7 @@ public class TeamResource extends GenericResource {
 				if (!opt.isPresent())
 					throw new NotAuthorizedException("Vous n'avez pas les droits de modification de cette équipe", "");
 			}
-			if (updated.getIdentifier() != teamId) {
+			if (!updated.getIdentifier().equals(teamId)) {
 				throw new BadRequestException("Les paramètres de la requête sont incohérents");
 			}
 			ToolLauncher.build()
