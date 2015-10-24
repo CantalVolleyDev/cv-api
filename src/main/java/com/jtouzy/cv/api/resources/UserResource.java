@@ -1,25 +1,38 @@
 package com.jtouzy.cv.api.resources;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
 
 import javax.annotation.security.RolesAllowed;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import com.google.common.base.Strings;
 import com.jtouzy.cv.api.errors.APIException;
+import com.jtouzy.cv.api.errors.ProgramException;
+import com.jtouzy.cv.api.io.FileInfos;
+import com.jtouzy.cv.api.io.FileManager;
 import com.jtouzy.cv.api.resources.beanview.UserLoginView;
+import com.jtouzy.cv.api.resources.beanview.UserSimpleView;
 import com.jtouzy.cv.api.resources.params.ChangePasswordParameters;
+import com.jtouzy.cv.api.resources.params.DataUploadParameters;
 import com.jtouzy.cv.api.security.Client;
 import com.jtouzy.cv.api.security.Roles;
+import com.jtouzy.cv.config.PropertiesNames;
+import com.jtouzy.cv.config.PropertiesReader;
 import com.jtouzy.cv.model.classes.Match;
 import com.jtouzy.cv.model.classes.SeasonTeamPlayer;
 import com.jtouzy.cv.model.classes.User;
@@ -43,7 +56,7 @@ public class UserResource extends GenericResource {
 	public Response login(UserLoginParameters logParameters)
 	throws NotAuthorizedException {
 		User user = commonLogin(logParameters);
-		return getBuilderViewResponse(user, UserLoginView.class).cookie(Client.createAuthCookie(user))
+		return getBuilderViewResponse(user, UserLoginView.class).cookie(Client.createAuthCookie(requestContext, user))
 				                                                .build();
 	}
 	
@@ -63,7 +76,7 @@ public class UserResource extends GenericResource {
 				throw new NotAuthorizedException("Le joueur ne fait pas parti de l'équipe adverse", "");
 			}
 			return Response.status(Response.Status.OK)
-					       .cookie(Client.createAuthValidationCookie(user))
+					       .cookie(Client.createAuthValidationCookie(requestContext, user))
 					       .entity(user)
 					       .build();
 		} catch (DAOInstantiationException | QueryException ex) {
@@ -107,7 +120,7 @@ public class UserResource extends GenericResource {
 	@RolesAllowed(Roles.CONNECTED)
 	public Response logout() {
 		return Response.status(Response.Status.OK)
-				       .cookie(Client.createAuthCookie())
+				       .cookie(Client.createAuthCookie(requestContext))
 				       .build();
 	}
 	
@@ -135,12 +148,36 @@ public class UserResource extends GenericResource {
 		MailBuilder.sendMailNewPassword(currentUser, chgPasswordParams.newPassword);
 	}
 	
-	/*@POST
+	@POST
 	@Path("/upload")
+	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@RolesAllowed(Roles.CONNECTED)
-	public void upload() {
-		
-	}*/
+	public FileInfos upload(@FormDataParam("file") InputStream uploadedInputStream,
+			           @FormDataParam("file") FormDataContentDisposition fileData)
+	throws IOException {
+		return FileManager.createUploadFile(uploadedInputStream, fileData.getFileName());
+	}
+	
+	@POST
+	@Path("/validateUpload")
+	@RolesAllowed(Roles.CONNECTED)
+	public Response validateUpload(DataUploadParameters uploadParameters)
+	throws IOException, DataValidationException {
+		try {
+			User user = getRequestContext().getUserPrincipal().getUser();
+			final StringBuilder remoteFile = new StringBuilder();
+			remoteFile.append(PropertiesReader.getProperty(PropertiesNames.FILE_REMOTE_UPLOAD_PATH) + "/user")
+			          .append(user.getIdentifier())
+			          .append(".")
+			          .append("png");
+			FileManager.writeBase64Data(uploadParameters.data, remoteFile.toString());
+			user.setImage("png");
+			User finalUser = getDAO(UserDAO.class).update(user);
+			return buildViewResponse(finalUser, UserSimpleView.class);
+		} catch (DAOInstantiationException | DAOCrudException ex) {
+			throw new ProgramException(ex); 
+		}
+	}
 	
 	@GET
 	@Path("/account")

@@ -255,7 +255,7 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 			getRequestContext().getConnection().commit();
 			getRequestContext().getConnection().setAutoCommit(true);
 			return Response.status(Response.Status.OK)
-						   .cookie(Client.createAuthValidationCookie())
+						   .cookie(Client.createAuthValidationCookie(requestContext))
 					       .build();
 		} catch (DAOInstantiationException | QueryException | DAOCrudException | SQLException | RankingsCalculateException ex) {
 			throw new ProgramException(ex);
