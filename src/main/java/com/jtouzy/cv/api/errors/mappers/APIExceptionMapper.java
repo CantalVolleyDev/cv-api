@@ -1,6 +1,7 @@
 package com.jtouzy.cv.api.errors.mappers;
 
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
@@ -26,6 +27,11 @@ public class APIExceptionMapper implements ExceptionMapper<Exception> {
 						       .type(MediaType.APPLICATION_JSON)
 						       .entity(new ExceptionDescriptor(exception, build404Message(exception)))
 						       .build();
+			} else if (exception instanceof ForbiddenException) {
+				return Response.status(Response.Status.FORBIDDEN)
+					       	   .type(MediaType.APPLICATION_JSON)
+					       	   .entity(new ExceptionDescriptor(exception, build401Message(exception)))
+					       	   .build();
 			} else if (exception instanceof BadRequestException) {
 				return Response.status(Response.Status.BAD_REQUEST)
 						       .type(MediaType.APPLICATION_JSON)
