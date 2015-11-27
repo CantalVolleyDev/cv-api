@@ -23,7 +23,6 @@ import com.jtouzy.cv.api.security.TokenHelper;
 import com.jtouzy.cv.model.classes.User;
 import com.jtouzy.cv.model.dao.UserDAO;
 import com.jtouzy.dao.DAOManager;
-import com.jtouzy.dao.errors.DAOInstantiationException;
 import com.jtouzy.dao.errors.QueryException;
 
 /** PreMatching est nécessaire sinon l'authentification passe avant le RolesAllowedDynamicFeature */
@@ -65,7 +64,7 @@ public class AuthFilter implements ContainerRequestFilter {
 			}
 			securityContext = new RequestSecurityContext(client);
 			requestContext.setSecurityContext(securityContext);
-		} catch (SQLException | DAOInstantiationException ex) {
+		} catch (SQLException ex) {
 			throw new IOException(ex);
 		}
 	}

@@ -6,15 +6,12 @@ import javax.annotation.security.PermitAll;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.Providers;
 
 import com.jtouzy.cv.api.errors.APIException;
 import com.jtouzy.cv.api.resources.beanview.NewsView;
 import com.jtouzy.cv.model.classes.News;
 import com.jtouzy.cv.model.dao.NewsDAO;
-import com.jtouzy.dao.errors.DAOInstantiationException;
 import com.jtouzy.dao.errors.QueryException;
 
 @Path("/news")
@@ -28,7 +25,7 @@ public class NewsResource extends GenericResource {
 	protected Integer page;
 	
 	@GET
-	public Response getAllAsResponse(@Context Providers providers)
+	public Response getAllAsResponse()
 	throws APIException {
 		try {
 			List<News> news;
@@ -38,7 +35,7 @@ public class NewsResource extends GenericResource {
 				news = getDAO(NewsDAO.class).getAllWithDetails(limitTo, page);
 			}	
 			return buildViewResponse(news, NewsView.class);
-		} catch (QueryException | DAOInstantiationException ex) {
+		} catch (QueryException ex) {
 			throw new APIException(Response.Status.INTERNAL_SERVER_ERROR, ex);
 		}
 	}

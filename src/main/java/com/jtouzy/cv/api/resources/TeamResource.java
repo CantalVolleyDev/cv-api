@@ -36,7 +36,6 @@ import com.jtouzy.cv.tools.ToolLauncher;
 import com.jtouzy.cv.tools.model.ParameterNames;
 import com.jtouzy.cv.tools.model.ToolsList;
 import com.jtouzy.dao.errors.DAOCrudException;
-import com.jtouzy.dao.errors.DAOInstantiationException;
 import com.jtouzy.dao.errors.QueryException;
 import com.jtouzy.dao.errors.validation.DataValidationException;
 
@@ -52,7 +51,7 @@ public class TeamResource extends GenericResource {
 			infos.setSeasonTeam(st);
 			infos.setGyms(getDAO(GymDAO.class).getAll());
 			return infos;
-		} catch (DAOInstantiationException | QueryException ex) {
+		} catch (QueryException ex) {
 			throw new ProgramException(ex);
 		}
 	}
@@ -60,8 +59,7 @@ public class TeamResource extends GenericResource {
 	@PUT
 	@Path("/{id}")
 	@RolesAllowed(Roles.CONNECTED)
-	public void update(@PathParam("id") Integer teamId, SeasonTeam updated)
-	throws DataValidationException {
+	public void update(@PathParam("id") Integer teamId, SeasonTeam updated) {
 		try {
 			findSeasonTeam(teamId);
 			List<SeasonTeamPlayer> players = getDAO(SeasonTeamPlayerDAO.class).getAllBySeasonTeam(teamId);
@@ -85,7 +83,7 @@ public class TeamResource extends GenericResource {
 			            .addParameter(ParameterNames.DATE, updated.getDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd,HH:mm")))
 			            .addParameter(ParameterNames.GYM, updated.getGym().getIdentifier())
 			            .run();
-		} catch (DAOInstantiationException | QueryException ex) {
+		} catch (QueryException ex) {
 			throw new ProgramException(ex);
 		}
 	}
@@ -102,7 +100,7 @@ public class TeamResource extends GenericResource {
 			infos.setComments(getDAO(CommentDAO.class).getAllByTeam(teamId));
 			infos.setLastMatchs(getDAO(MatchDAO.class).getAllPlayedBySeasonTeam(teamId, 5));
 			return buildViewResponse(infos, TeamView.class, UserView.class);
-		} catch (DAOInstantiationException | QueryException ex) {
+		} catch (QueryException ex) {
 			throw new ProgramException(ex);
 		}
 	}
@@ -115,7 +113,7 @@ public class TeamResource extends GenericResource {
 			if (st == null)
 				throw new NotFoundException("L'équipe " + teamId + " n'existe pas");
 			return st;
-		} catch (DAOInstantiationException | QueryException ex) {
+		} catch (QueryException ex) {
 			throw new ProgramException(ex);
 		}
 	}
@@ -126,7 +124,7 @@ public class TeamResource extends GenericResource {
 	throws ProgramException {
 		try {
 			return buildViewResponse(getDAO(CommentDAO.class).getAllByTeam(teamId), UserSimpleView.class);
-		} catch (DAOInstantiationException | QueryException ex) {
+		} catch (QueryException ex) {
 			throw new ProgramException(ex);
 		}
 	}
@@ -157,7 +155,7 @@ public class TeamResource extends GenericResource {
 			newComment.setDate(LocalDateTime.now());
 			newComment.setUser(getRequestContext().getUserPrincipal().getUser());
 			getDAO(CommentDAO.class).create(newComment);
-		} catch (QueryException | DAOInstantiationException | DAOCrudException ex) {
+		} catch (QueryException | DAOCrudException ex) {
 			throw new ProgramException(ex);
 		}
 	}

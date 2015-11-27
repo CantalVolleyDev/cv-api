@@ -43,7 +43,6 @@ import com.jtouzy.cv.model.dao.UserDAO;
 import com.jtouzy.cv.security.UserPassword;
 import com.jtouzy.cv.tools.mail.MailBuilder;
 import com.jtouzy.dao.errors.DAOCrudException;
-import com.jtouzy.dao.errors.DAOInstantiationException;
 import com.jtouzy.dao.errors.QueryException;
 import com.jtouzy.dao.errors.validation.DataValidationException;
 
@@ -79,7 +78,7 @@ public class UserResource extends GenericResource {
 					       .cookie(Client.createAuthValidationCookie(requestContext, user))
 					       .entity(user)
 					       .build();
-		} catch (DAOInstantiationException | QueryException ex) {
+		} catch (QueryException ex) {
 			throw new NotAuthorizedException(ex, "");
 		}
 	}
@@ -97,7 +96,7 @@ public class UserResource extends GenericResource {
 			UserPassword.checkPassword(user, logParameters.password);
 			logger.trace("Mot de passe valide : Connexion réussie");
 			return user;
-		} catch (DAOInstantiationException | QueryException | SecurityException ex) {
+		} catch (QueryException | SecurityException ex) {
 			if (ex instanceof SecurityException)
 				throw new NotAuthorizedException(ex.getMessage(), "");
 			throw new NotAuthorizedException(ex, "");
@@ -142,7 +141,7 @@ public class UserResource extends GenericResource {
 		currentUser.setPassword(UserPassword.getFullHashedNewPassword(chgPasswordParams.newPassword));
 		try {
 			getDAO(UserDAO.class).update(currentUser);
-		} catch (DAOInstantiationException | DAOCrudException | DataValidationException ex) {
+		} catch (DAOCrudException | DataValidationException ex) {
 			throw new NotAuthorizedException(ex);
 		}
 		MailBuilder.sendMailNewPassword(currentUser, chgPasswordParams.newPassword);
@@ -174,7 +173,7 @@ public class UserResource extends GenericResource {
 			user.setImage("png");
 			User finalUser = getDAO(UserDAO.class).update(user);
 			return buildViewResponse(finalUser, UserSimpleView.class);
-		} catch (DAOInstantiationException | DAOCrudException ex) {
+		} catch (DAOCrudException ex) {
 			throw new ProgramException(ex); 
 		}
 	}
@@ -190,7 +189,7 @@ public class UserResource extends GenericResource {
 			infos.setTeams(getDAO(SeasonTeamPlayerDAO.class).getAllBySeasonAndPlayer(currentSeason, currentUser));
 			infos.setMatchs(getDAO(MatchDAO.class).getAllBySeasonAndUser(currentSeason, currentUser));
 			return infos;
-		} catch (DAOInstantiationException | QueryException ex) {
+		} catch (QueryException ex) {
 			throw new APIException(Response.Status.INTERNAL_SERVER_ERROR, ex);
 		}
 	}

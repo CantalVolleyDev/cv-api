@@ -40,14 +40,13 @@ import com.jtouzy.cv.model.dao.SeasonTeamPlayerDAO;
 import com.jtouzy.cv.model.dao.UserDAO;
 import com.jtouzy.cv.model.errors.RankingsCalculateException;
 import com.jtouzy.dao.errors.DAOCrudException;
-import com.jtouzy.dao.errors.DAOInstantiationException;
 import com.jtouzy.dao.errors.QueryException;
 import com.jtouzy.dao.errors.validation.DataValidationException;
 
 @Path("/matchs")
 public class MatchResource extends BasicResource<Match, MatchDAO> {
 	public MatchResource() {
-		super(Match.class, MatchDAO.class);
+		super(MatchDAO.class);
 	}
 
 	@GET
@@ -62,7 +61,7 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 			addMatchPlayers(details, match);
 			details.setComments(getDAO(CommentDAO.class).getAllByMatch(matchId));
 			return buildViewResponse(details, UserSimpleView.class, MatchTeamView.class);
-		} catch (DAOInstantiationException | QueryException ex) {
+		} catch (QueryException ex) {
 			throw new ProgramException(ex);
 		}
 	}
@@ -73,7 +72,7 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 	throws ProgramException {
 		try {
 			return buildViewResponse(getDAO(CommentDAO.class).getAllByMatch(matchId), UserSimpleView.class);
-		} catch (DAOInstantiationException | QueryException ex) {
+		} catch (QueryException ex) {
 			throw new ProgramException(ex);
 		}
 	}
@@ -136,13 +135,13 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 			// Recherche du commentaire uniquement si on est sur un refus
 			infos.setSubmitterComment(submitterComment);
 			return infos;
-		} catch (DAOInstantiationException | QueryException ex) {
+		} catch (QueryException ex) {
 			throw new ProgramException(ex);
 		}
 	}
 	
 	private void addMatchPlayers(MatchInfos infos, Match match)
-	throws DAOInstantiationException, QueryException {
+	throws QueryException {
 		// Recherche des joueurs déjà saisis pour le match
 		List<MatchPlayer> matchPlayers = getDAO(MatchPlayerDAO.class).getAllByMatch(match.getIdentifier());
 		infos.setFirstTeamMatchPlayers(matchPlayers.stream()
@@ -161,7 +160,7 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 				throw new NotFoundException("Match " + matchId + " non trouvé");
 			}
 			return match;
-		} catch (DAOInstantiationException | QueryException ex) {
+		} catch (QueryException ex) {
 			throw new ProgramException(ex);
 		}
 	}
@@ -169,6 +168,7 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 	@POST
 	@Path("/{id}/submit")
 	@RolesAllowed(Roles.CONNECTED)
+	@SuppressWarnings("resource")
 	public Response submit(@PathParam("id") Integer matchId, MatchSubmitInfos submit)
 	throws ProgramException, DataValidationException {
 		Connection connection = getRequestContext().getConnection();
@@ -199,7 +199,7 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 				}
 			}
 			// Contrôle pour les joueurs
-			List<MatchPlayer> validatePlayers = new ArrayList<MatchPlayer>();
+			List<MatchPlayer> validatePlayers = new ArrayList<>();
 			boolean validateSubmitter = false, deleteSubmitter = (match.getState() == Match.State.R);
 			if (submitted.getState() == Match.State.S || submitted.getState() == Match.State.R) {
 				validateSubmitter = true;
@@ -257,7 +257,7 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 			return Response.status(Response.Status.OK)
 						   .cookie(Client.createAuthValidationCookie(requestContext))
 					       .build();
-		} catch (DAOInstantiationException | QueryException | DAOCrudException | SQLException | RankingsCalculateException ex) {
+		} catch (QueryException | DAOCrudException | SQLException | RankingsCalculateException ex) {
 			throw new ProgramException(ex);
 		} finally {
 			try {
@@ -272,26 +272,22 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 	}
 	
 	private User getCurrentSubmitUser()
-	throws NotAuthorizedException, QueryException {
-		try {
-			User user = getRequestContext().getUserPrincipal().getUser();
-			// On regarde s'il y a un cookie d'authentification de validation directe
-			Cookie tokenForScoreValidation = requestContext.getCookies().get(Client.AUTHENTIFICATION_VALIDATION_COOKIE_NAME);
-			if (tokenForScoreValidation != null) {
-				String tokenValue = tokenForScoreValidation.getValue();
-				if (tokenValue != null) {
-					tokenValue = TokenHelper.getUserID(tokenValue);
-					try {
-						user = getDAO(UserDAO.class).getOneByMail(tokenValue);
-					} catch (QueryException ex) {
-						throw new NotAuthorizedException("Problème dans l'authentification", "");
-					}
+	throws NotAuthorizedException {
+		User user = getRequestContext().getUserPrincipal().getUser();
+		// On regarde s'il y a un cookie d'authentification de validation directe
+		Cookie tokenForScoreValidation = requestContext.getCookies().get(Client.AUTHENTIFICATION_VALIDATION_COOKIE_NAME);
+		if (tokenForScoreValidation != null) {
+			String tokenValue = tokenForScoreValidation.getValue();
+			if (tokenValue != null) {
+				tokenValue = TokenHelper.getUserID(tokenValue);
+				try {
+					user = getDAO(UserDAO.class).getOneByMail(tokenValue);
+				} catch (QueryException ex) {
+					throw new NotAuthorizedException("Problème dans l'authentification", "");
 				}
 			}
-			return user;
-		} catch (DAOInstantiationException ex) {
-			throw new QueryException(ex);
 		}
+		return user;
 	}
 	
 	@POST
@@ -320,7 +316,7 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 			newComment.setDate(LocalDateTime.now());
 			newComment.setUser(getRequestContext().getUserPrincipal().getUser());
 			getDAO(CommentDAO.class).create(newComment);
-		} catch (QueryException | DAOInstantiationException | DAOCrudException ex) {
+		} catch (QueryException | DAOCrudException ex) {
 			throw new ProgramException(ex);
 		}
 	}
@@ -330,7 +326,7 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 	throws APIException {
 		try {
 			return getDAO(MatchDAO.class).getAllBySeasonAndUser(getSeasonIDWithParam(), getUserIDWithParam());
-		} catch (DAOInstantiationException | QueryException ex) {
+		} catch (QueryException ex) {
 			throw new APIException(Response.Status.INTERNAL_SERVER_ERROR, ex);
 		}
 	}

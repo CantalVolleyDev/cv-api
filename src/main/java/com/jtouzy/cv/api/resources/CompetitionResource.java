@@ -10,7 +10,6 @@ import com.jtouzy.cv.api.errors.APIException;
 import com.jtouzy.cv.api.errors.ProgramException;
 import com.jtouzy.cv.model.classes.Competition;
 import com.jtouzy.cv.model.dao.CompetitionDAO;
-import com.jtouzy.dao.errors.DAOInstantiationException;
 import com.jtouzy.dao.errors.QueryException;
 
 @Path("/competitions")
@@ -20,7 +19,7 @@ public class CompetitionResource extends BasicResource<Competition, CompetitionD
 	protected Boolean fillChampionships;
 	
 	public CompetitionResource() {
-		super(Competition.class, CompetitionDAO.class);
+		super(CompetitionDAO.class);
 	}
 	
 	@Override
@@ -31,7 +30,7 @@ public class CompetitionResource extends BasicResource<Competition, CompetitionD
 				return getDAO().getAllWithChampionshipsBySeason(getSeasonIDWithParam());
 			}
 			return super.getAll();
-		} catch (DAOInstantiationException | QueryException ex) {
+		} catch (QueryException ex) {
 			throw new ProgramException(ex);
 		}
 	}

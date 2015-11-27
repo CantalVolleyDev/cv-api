@@ -19,40 +19,33 @@ import javax.ws.rs.core.MediaType;
 import com.jtouzy.cv.model.classes.Championship;
 import com.jtouzy.cv.model.classes.Match;
 import com.jtouzy.cv.model.dao.ChampionshipDAO;
-import com.jtouzy.cv.model.errors.CalendarGenerationException;
 import com.jtouzy.cv.model.errors.RankingsCalculateException;
 import com.jtouzy.cv.tools.ToolLauncher;
 import com.jtouzy.cv.tools.executors.calgen.ChampionshipCalendarGenerator;
 import com.jtouzy.cv.tools.model.ParameterNames;
 import com.jtouzy.cv.tools.model.ToolExecutor;
 import com.jtouzy.cv.tools.model.ToolsList;
-import com.jtouzy.dao.errors.DAOInstantiationException;
 import com.jtouzy.dao.errors.QueryException;
 import com.jtouzy.dao.errors.validation.DataValidationException;
 
 @Path("/championships")
 public class ChampionshipResource extends BasicResource<Championship, ChampionshipDAO> {
 	public ChampionshipResource() {
-		super(Championship.class, ChampionshipDAO.class);
+		super(ChampionshipDAO.class);
 	}
 	
 	@POST
 	@Path("/{id}/calculateRankings")
 	public void calculateRankings(@PathParam("id") Integer championshipId)
 	throws RankingsCalculateException, DataValidationException {
-		try {
-			ChampionshipDAO dao = getDAO(ChampionshipDAO.class);
-			dao.calculateRankings(championshipId);
-		} catch (DAOInstantiationException ex) {
-			throw new RankingsCalculateException(ex);
-		}
+		ChampionshipDAO dao = getDAO(ChampionshipDAO.class);
+		dao.calculateRankings(championshipId);
 	}
 	
 	@GET
 	@Path("/{id}/previewCalendar")
 	@Produces(MediaType.TEXT_HTML + ";charset=utf-8")
-	public String previewCalendar(@PathParam("id") Integer championshipId, @QueryParam("return") Boolean returnMatchs)
-	throws CalendarGenerationException, DAOInstantiationException {
+	public String previewCalendar(@PathParam("id") Integer championshipId, @QueryParam("return") Boolean returnMatchs) {
 		final StringBuilder text = new StringBuilder();
 		text.append("<html><head><title>Prévisualisation</title></head><body>");
 		boolean returnMatchsFlag = false;
@@ -110,13 +103,9 @@ public class ChampionshipResource extends BasicResource<Championship, Championsh
 	throws QueryException {
 		if (championshipId == null)
 			throw new BadRequestException("L'identifiant du championnat doit être renseigné");
-		try {
-			Championship championship = getDAO(ChampionshipDAO.class).getOneWithTeamsAndMatchs(championshipId);
-			if (championship == null)
-				throw new NotFoundException("Le championnat " + championshipId + " n'existe pas");
-			return championship;
-		} catch (DAOInstantiationException ex) {
-			throw new QueryException(ex);
-		}
+		Championship championship = getDAO(ChampionshipDAO.class).getOneWithTeamsAndMatchs(championshipId);
+		if (championship == null)
+			throw new NotFoundException("Le championnat " + championshipId + " n'existe pas");
+		return championship;
 	}
 }

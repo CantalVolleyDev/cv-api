@@ -15,9 +15,8 @@ import com.jtouzy.cv.api.errors.CacheLoadException;
 import com.jtouzy.cv.model.dao.SeasonDAO;
 import com.jtouzy.cv.tools.mail.MailManager;
 import com.jtouzy.dao.DAOManager;
-import com.jtouzy.dao.errors.DAOInstantiationException;
 import com.jtouzy.dao.errors.QueryException;
-import com.jtouzy.dao.errors.model.ModelClassDefinitionException;
+import com.jtouzy.dao.model.ModelDefinitionException;
 
 /**
  * Servlet générale de l'API
@@ -42,7 +41,7 @@ public class APIServlet extends ServletContainer {
 			DAOManager.init("com.jtouzy.cv.model.classes");
 			MailManager.init();
 			loadCachedData();
-		} catch (ModelClassDefinitionException | APIConfigurationException ex) {
+		} catch (ModelDefinitionException | APIConfigurationException ex) {
 			throw new ServletException(ex);
 		}
 		logger.trace("Fin d'initialisation de la servlet");
@@ -62,7 +61,7 @@ public class APIServlet extends ServletContainer {
 			SeasonDAO seasonDao = DAOManager.getDAO(loadDataCacheConnection, SeasonDAO.class);
 			seasonDao.getCurrentSeason();
 			DAOManager.removeForConnection(loadDataCacheConnection);
-		} catch (SQLException | DAOInstantiationException | QueryException ex) {
+		} catch (SQLException | QueryException ex) {
 			throw new CacheLoadException(ex);
 		}
 		logger.trace("Fin du chargement des données en cache");

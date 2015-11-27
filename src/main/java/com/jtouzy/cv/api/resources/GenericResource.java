@@ -12,7 +12,6 @@ import javax.ws.rs.ext.Providers;
 import com.jtouzy.cv.api.security.RequestSecurityContext;
 import com.jtouzy.dao.DAO;
 import com.jtouzy.dao.DAOManager;
-import com.jtouzy.dao.errors.DAOInstantiationException;
 import com.owlike.genson.BeanView;
 import com.owlike.genson.Genson;
 
@@ -23,8 +22,7 @@ public class GenericResource {
 	@Context
 	protected Providers providers;
 	
-	protected <DA extends DAO<TP>,TP> DA getDAO(Class<DA> daoClass)
-	throws DAOInstantiationException {
+	protected <DA extends DAO<TP>,TP> DA getDAO(Class<DA> daoClass) {
 		return DAOManager.getDAO(getRequestContext().getConnection(), daoClass);
 	}
 	

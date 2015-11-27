@@ -24,7 +24,6 @@ import com.jtouzy.cv.model.dao.SeasonDAO;
 import com.jtouzy.dao.DAO;
 import com.jtouzy.dao.DAOManager;
 import com.jtouzy.dao.errors.DAOCrudException;
-import com.jtouzy.dao.errors.DAOInstantiationException;
 import com.jtouzy.dao.errors.QueryException;
 import com.jtouzy.dao.errors.validation.DataValidationException;
 
@@ -36,9 +35,8 @@ public class BasicResource<T, D extends DAO<T>> extends GenericResource {
 	@QueryParam("user")
 	protected String userId;
 	
-	public BasicResource(Class<T> objectClass, Class<D> daoClass) {
+	public BasicResource(Class<D> daoClass) {
 		this.daoClass = daoClass;
-		/* FIXME: objectClass ne sert plus */
 	}
 
 	@GET
@@ -46,7 +44,7 @@ public class BasicResource<T, D extends DAO<T>> extends GenericResource {
 	throws APIException {
 		try {
 			return getDAO().getAll();
-		} catch (DAOInstantiationException | QueryException ex) {
+		} catch (QueryException ex) {
 			throw new ProgramException(ex);
 		}
 	}
@@ -57,7 +55,7 @@ public class BasicResource<T, D extends DAO<T>> extends GenericResource {
 	throws APIException, DataValidationException {
 		try {
 			return getDAO().create(object);
-		} catch (DAOInstantiationException | DAOCrudException ex) {
+		} catch (DAOCrudException ex) {
 			throw new ProgramException(ex);
 		}
 	}
@@ -68,7 +66,7 @@ public class BasicResource<T, D extends DAO<T>> extends GenericResource {
 	throws APIException, DataValidationException {
 		try {
 			return getDAO().update(object);
-		} catch (DAOInstantiationException | DAOCrudException ex) {
+		} catch (DAOCrudException ex) {
 			throw new ProgramException(ex);
 		}
 	}
@@ -79,18 +77,17 @@ public class BasicResource<T, D extends DAO<T>> extends GenericResource {
 	throws APIException, DataValidationException {
 		try {
 			getDAO().delete(object);
-		} catch (DAOInstantiationException | DAOCrudException ex) {
+		} catch (DAOCrudException ex) {
 			throw new ProgramException(ex);
 		}
 	}
 	
-	protected D getDAO()
-	throws DAOInstantiationException {
+	protected D getDAO() {
 		return getDAO(this.daoClass);
 	}
 	
 	protected Integer getSeasonIDWithParam()
-	throws SeasonNotFoundException, DAOInstantiationException, QueryException {
+	throws SeasonNotFoundException, QueryException {
 		if (seasonId != null) {
 			Integer seasonID = null;
 			if (seasonId.equals("current")) {
