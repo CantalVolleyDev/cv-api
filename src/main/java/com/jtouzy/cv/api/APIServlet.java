@@ -38,7 +38,7 @@ public class APIServlet extends ServletContainer {
 		super.init();
 		try {
 			AppConfig.init();
-			DAOManager.init("com.jtouzy.cv.model.classes");
+			DAOManager.init("dao");
 			MailManager.init();
 			loadCachedData();
 		} catch (ModelDefinitionException | APIConfigurationException ex) {
