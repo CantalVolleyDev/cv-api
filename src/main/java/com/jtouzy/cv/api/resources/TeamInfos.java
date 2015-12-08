@@ -11,6 +11,7 @@ public class TeamInfos {
 	private SeasonTeam seasonTeam;
 	private List<SeasonTeamPlayer> players;
 	private List<Comment> comments;
+	private List<Comment> matchComments;
 	private List<Match> lastMatchs;
 	
 	public SeasonTeam getSeasonTeam() {
@@ -36,5 +37,11 @@ public class TeamInfos {
 	}
 	public void setLastMatchs(List<Match> lastMatchs) {
 		this.lastMatchs = lastMatchs;
+	}
+	public List<Comment> getMatchComments() {
+		return matchComments;
+	}
+	public void setMatchComments(List<Comment> matchComments) {
+		this.matchComments = matchComments;
 	}
 }

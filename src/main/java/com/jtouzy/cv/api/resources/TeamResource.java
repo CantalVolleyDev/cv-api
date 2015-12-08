@@ -99,6 +99,9 @@ public class TeamResource extends GenericResource {
 			infos.setPlayers(getDAO(SeasonTeamPlayerDAO.class).getAllBySeasonTeam(teamId));
 			infos.setComments(getDAO(CommentDAO.class).getAllByTeam(teamId));
 			infos.setLastMatchs(getDAO(MatchDAO.class).getAllPlayedBySeasonTeam(teamId, 5));
+			infos.setMatchComments(
+					getDAO(CommentDAO.class).getAllLastMatchCommentsByTeam(
+							infos.getLastMatchs(), infos.getPlayers(), 5));
 			return buildViewResponse(infos, TeamView.class, UserView.class);
 		} catch (QueryException ex) {
 			throw new ProgramException(ex);
