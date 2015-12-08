@@ -14,6 +14,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Cookie;
@@ -39,6 +40,7 @@ import com.jtouzy.cv.model.dao.MatchPlayerDAO;
 import com.jtouzy.cv.model.dao.SeasonTeamPlayerDAO;
 import com.jtouzy.cv.model.dao.UserDAO;
 import com.jtouzy.cv.model.errors.RankingsCalculateException;
+import com.jtouzy.cv.tools.mail.MailBuilder;
 import com.jtouzy.dao.errors.DAOCrudException;
 import com.jtouzy.dao.errors.QueryException;
 import com.jtouzy.dao.errors.validation.DataValidationException;
@@ -49,6 +51,35 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 		super(MatchDAO.class);
 	}
 
+	@GET
+	@Path("/{id}/updateInfos")
+	public Match getMatch(@PathParam("id") Integer matchId) {
+		try {
+			// Lecture du match avec détails (Exception si le match n'existe pas)
+			Match match = controlMatchDetails(matchId);
+			if (match.getState() == Match.State.V) {
+				throw new NotAuthorizedException("Match " + matchId + " déjà validé", "");
+			}
+			// Select unique pour récupérer tous les joueurs des 2 équipes
+			// On fait ensuite un tri pour diviser, à la place de faire 2 select
+			List<SeasonTeamPlayer> allPlayers = 
+					getDAO(SeasonTeamPlayerDAO.class).getAllBySeasonTeamIn(
+							Arrays.asList(match.getFirstTeam().getIdentifier(), 
+									      match.getSecondTeam().getIdentifier()));
+			// On contrôle que l'un des joueurs d'une des deux équipes soit le joueur connecté
+			final Integer connectedId = getCurrentSubmitUser().getIdentifier();
+			List<SeasonTeamPlayer> connectedPlayer = allPlayers.stream()
+					                                           .filter(s -> s.getPlayer().getIdentifier().equals(connectedId))
+					                                           .collect(Collectors.toList());
+			if (connectedPlayer.size() == 0) {
+				throw new NotAuthorizedException("Impossible de visualiser les données de ce match : Vous ne faites parti d'aucune des deux équipes", "");
+			}
+			return match;
+		} catch (QueryException ex) {
+			throw new ProgramException(ex);
+		}
+	}
+	
 	@GET
 	@Path("/{id}/details")
 	public Response getMatchDetails(@PathParam("id") Integer matchId)
@@ -73,6 +104,47 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 		try {
 			return buildViewResponse(getDAO(CommentDAO.class).getAllByMatch(matchId), UserSimpleView.class);
 		} catch (QueryException ex) {
+			throw new ProgramException(ex);
+		}
+	}
+	
+	@PUT
+	@Path("/{id}/updateInfos")
+	@RolesAllowed(Roles.CONNECTED)
+	public void updateInfos(@PathParam("id") Integer matchId, Match infos)
+	throws DataValidationException {
+		try {
+			// Lecture du match avec détails (Exception si le match n'existe pas)
+			Match match = controlMatchDetails(matchId);
+			if (match.getState() == Match.State.V) {
+				throw new NotAuthorizedException("Match " + matchId + " déjà validé", "");
+			}
+			// Select unique pour récupérer tous les joueurs des 2 équipes
+			// On fait ensuite un tri pour diviser, à la place de faire 2 select
+			List<SeasonTeamPlayer> allPlayers = 
+					getDAO(SeasonTeamPlayerDAO.class).getAllBySeasonTeamIn(
+							Arrays.asList(match.getFirstTeam().getIdentifier(), 
+									      match.getSecondTeam().getIdentifier()));
+			// On contrôle que l'un des joueurs d'une des deux équipes soit le joueur connecté
+			final Integer connectedId = getCurrentSubmitUser().getIdentifier();
+			List<SeasonTeamPlayer> connectedPlayer = allPlayers.stream()
+					                                           .filter(s -> s.getPlayer().getIdentifier().equals(connectedId))
+					                                           .collect(Collectors.toList());
+			if (connectedPlayer.size() == 0) {
+				throw new NotAuthorizedException("Impossible de modifier les données de ce match : Vous ne faites parti d'aucune des deux équipes", "");
+			}
+			
+			LocalDateTime oldDate = match.getDate();
+			match.setDate(infos.getDate());
+			getDAO().update(match);
+			SeasonTeamPlayer stp = connectedPlayer.get(0);
+			List<SeasonTeamPlayer> oppositeManager = allPlayers.stream()
+			          										   .filter(s -> !s.getTeam().getIdentifier().equals(stp.getTeam().getIdentifier()) && s.getManager())
+			          										   .collect(Collectors.toList());
+			if (oppositeManager.size() > 0) {
+				MailBuilder.sendMailMatchDateChanged(match, oldDate, oppositeManager.get(0).getPlayer().getMail());
+			}
+		} catch (QueryException | DAOCrudException ex) {
 			throw new ProgramException(ex);
 		}
 	}
