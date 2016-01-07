@@ -88,7 +88,6 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 			Match match = controlMatchDetails(matchId);
 			MatchDetails details = new MatchDetails();
 			details.setMatch(match);
-			details.setGym(match.getFirstTeam().getGym());
 			addMatchPlayers(details, match);
 			details.setComments(getDAO(CommentDAO.class).getAllByMatch(matchId));
 			return buildViewResponse(details, UserSimpleView.class, MatchTeamView.class);
