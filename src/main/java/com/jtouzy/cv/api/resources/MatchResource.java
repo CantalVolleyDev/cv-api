@@ -24,10 +24,12 @@ import com.jtouzy.cv.api.errors.APIException;
 import com.jtouzy.cv.api.errors.ProgramException;
 import com.jtouzy.cv.api.resources.beanview.MatchTeamView;
 import com.jtouzy.cv.api.resources.beanview.UserSimpleView;
+import com.jtouzy.cv.api.resources.params.MatchUpdateInfos;
 import com.jtouzy.cv.api.security.Client;
 import com.jtouzy.cv.api.security.Roles;
 import com.jtouzy.cv.api.security.TokenHelper;
 import com.jtouzy.cv.model.classes.Comment;
+import com.jtouzy.cv.model.classes.Gym;
 import com.jtouzy.cv.model.classes.Match;
 import com.jtouzy.cv.model.classes.MatchPlayer;
 import com.jtouzy.cv.model.classes.SeasonTeam;
@@ -35,6 +37,7 @@ import com.jtouzy.cv.model.classes.SeasonTeamPlayer;
 import com.jtouzy.cv.model.classes.User;
 import com.jtouzy.cv.model.dao.ChampionshipDAO;
 import com.jtouzy.cv.model.dao.CommentDAO;
+import com.jtouzy.cv.model.dao.GymDAO;
 import com.jtouzy.cv.model.dao.MatchDAO;
 import com.jtouzy.cv.model.dao.MatchPlayerDAO;
 import com.jtouzy.cv.model.dao.SeasonTeamPlayerDAO;
@@ -53,7 +56,7 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 
 	@GET
 	@Path("/{id}/updateInfos")
-	public Match getMatch(@PathParam("id") Integer matchId) {
+	public MatchUpdateInfos getMatch(@PathParam("id") Integer matchId) {
 		try {
 			// Lecture du match avec détails (Exception si le match n'existe pas)
 			Match match = controlMatchDetails(matchId);
@@ -74,7 +77,10 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 			if (connectedPlayer.size() == 0) {
 				throw new NotAuthorizedException("Impossible de visualiser les données de ce match : Vous ne faites parti d'aucune des deux équipes", "");
 			}
-			return match;
+			MatchUpdateInfos updateInfos = new MatchUpdateInfos();
+			updateInfos.setMatch(match);
+			updateInfos.setGyms(getDAO(GymDAO.class).getAll());
+			return updateInfos;
 		} catch (QueryException ex) {
 			throw new ProgramException(ex);
 		}
@@ -134,14 +140,16 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 			}
 			
 			LocalDateTime oldDate = match.getDate();
+			Gym oldGym = match.getGym();
 			match.setDate(infos.getDate());
+			match.setGym(infos.getGym());
 			getDAO().update(match);
 			SeasonTeamPlayer stp = connectedPlayer.get(0);
 			List<SeasonTeamPlayer> oppositeManager = allPlayers.stream()
 			          										   .filter(s -> !s.getTeam().getIdentifier().equals(stp.getTeam().getIdentifier()) && s.getManager())
 			          										   .collect(Collectors.toList());
 			if (oppositeManager.size() > 0) {
-				MailBuilder.sendMailMatchDateChanged(match, oldDate, oppositeManager.get(0).getPlayer().getMail());
+				MailBuilder.sendMailMatchInfosChanged(match, oldDate, oldGym, oppositeManager.get(0).getPlayer().getMail());
 			}
 		} catch (QueryException | DAOCrudException ex) {
 			throw new ProgramException(ex);
