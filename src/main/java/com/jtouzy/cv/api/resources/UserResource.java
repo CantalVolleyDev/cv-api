@@ -2,6 +2,8 @@ package com.jtouzy.cv.api.resources;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -165,12 +167,16 @@ public class UserResource extends GenericResource {
 		try {
 			User user = getRequestContext().getUserPrincipal().getUser();
 			final StringBuilder remoteFile = new StringBuilder();
-			remoteFile.append(PropertiesReader.getProperty(PropertiesNames.FILE_REMOTE_UPLOAD_PATH) + "/user")
+			String version = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
+			remoteFile.append(PropertiesReader.getProperty(PropertiesNames.FILE_REMOTE_UPLOAD_PATH) + "/user/")
 			          .append(user.getIdentifier())
+			          .append("-")
+			          .append(version)
 			          .append(".")
 			          .append("png");
 			FileManager.writeBase64Data(uploadParameters.data, remoteFile.toString());
 			user.setImage("png");
+			user.setImageVersion(version);
 			User finalUser = getDAO(UserDAO.class).update(user);
 			return buildViewResponse(finalUser, UserSimpleView.class);
 		} catch (DAOCrudException ex) {

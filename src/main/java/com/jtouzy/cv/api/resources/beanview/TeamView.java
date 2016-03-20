@@ -26,6 +26,9 @@ public class TeamView extends TeamSimpleView {
 	public String getLabel(SeasonTeam seasonTeam) {
 		return seasonTeam.getLabel();
 	}
+	public String getReducedLabel(SeasonTeam seasonTeam) {
+		return seasonTeam.getReducedLabel();
+	}
 	public Integer getPlayersNumber(SeasonTeam seasonTeam) {
 		return seasonTeam.getPlayersNumber();
 	}

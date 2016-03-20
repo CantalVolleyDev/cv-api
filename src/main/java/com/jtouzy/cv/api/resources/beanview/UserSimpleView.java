@@ -19,10 +19,10 @@ public class UserSimpleView implements BeanView<User> {
 	public String getImagePath(User user) {
 		String extension = user.getImage();
 		if (extension != null) {
-			return "images/user" + user.getIdentifier() + "." + extension.toLowerCase(); 
+			return "images/user/" + user.getIdentifier() + "-" + user.getImageVersion() + "." + extension.toLowerCase(); 
 		}
 		if (user.getGender() == User.Gender.F)
-			return "images/user-female-default.png";
-		else return "images/user-male-default.png";
+			return "images/user/female-default-20160320-000000.png";
+		return "images/user/male-default-20160320-000000.png";
 	}
 }

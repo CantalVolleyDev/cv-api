@@ -25,6 +25,6 @@ public class NewsView implements BeanView<News> {
 		return object.getCategory();
 	}
 	public String getImagePath(News object) {
-		return "news" + object.getIdentifier() + ".jpg";
+		return "news/" + object.getIdentifier() + "-" + object.getImageVersion() + "." + object.getImage().toLowerCase();
 	}
 }

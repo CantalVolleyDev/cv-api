@@ -2,7 +2,9 @@ package com.jtouzy.cv.api.resources;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -17,6 +19,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.Response;
 
@@ -108,6 +111,20 @@ public class MatchResource extends BasicResource<Match, MatchDAO> {
 	throws ProgramException {
 		try {
 			return buildViewResponse(getDAO(CommentDAO.class).getAllByMatch(matchId), UserSimpleView.class);
+		} catch (QueryException ex) {
+			throw new ProgramException(ex);
+		}
+	}
+	
+	@GET
+	@Path("/byDate")
+	public List<Match> getMatchsByDate(@QueryParam("date") String date)
+	throws ProgramException {
+		try {
+			if (date == null) {
+				throw new BadRequestException("La date doit être précisée!");
+			}
+			return getDAO().getAllByDate(LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 		} catch (QueryException ex) {
 			throw new ProgramException(ex);
 		}
